@@ -18,6 +18,7 @@ import ru.atol.os.tspiot.api.IMarkingManager
 import ru.atol.os.tspiot.api.model.MarkingVerifyRequest
 import ru.atol.os.tspiot.api.model.MarkingVerifyResponse
 import ru.atol.os.tspiot.ui.MarkingServiceState
+import toPrettyString
 
 class MainViewModel : ViewModel() {
     private var isBound: Boolean = false
@@ -109,15 +110,8 @@ class MainViewModel : ViewModel() {
         }
 
         try {
-//            val clientInfo = ClientInfo(
-//                "ESM Test",
-//                "1.0",
-//                "id",
-//                "token"
-//            )
             val testRequest = MarkingVerifyRequest(
                 listOf("0104602220006549215opFcmK\u001d93dGVz"),
-//                clientInfo
             )
 
             val callback = object : IBundleResultCallback.Stub() {
@@ -135,7 +129,7 @@ class MainViewModel : ViewModel() {
 
                     _uiState.update { state ->
                         state.copy(
-                            lastResult = "Успех: $result",
+                            lastResult = "Успех: ${result?.toPrettyString()}",
                             lastAction = "Запрос выполнен успешно",
                             isValid = true
                         )

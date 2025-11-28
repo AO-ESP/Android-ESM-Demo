@@ -19,6 +19,7 @@ import ru.atol.os.tspiot.api.model.ClientInfo
 import ru.atol.os.tspiot.api.model.MarkingVerifyRequest
 import ru.atol.os.tspiot.api.model.MarkingVerifyResponse
 import ru.atol.os.tspiot.ui.MarkingServiceState
+import toPrettyString
 
 class MainViewModel : ViewModel() {
     private var isBound: Boolean = false
@@ -183,12 +184,4 @@ class MainViewModel : ViewModel() {
         iMarkingManager = null
         super.onCleared()
     }
-}
-
-fun Any.toPrettyString(indentSize: Int = 2): String {
-    val indent = " ".repeat(indentSize)
-    return toString()
-        .replace(", ", ",\n$indent") // Add newline and indent after commas
-        .replace("(", "(\n$indent") // Add newline and indent after opening parenthesis
-        .dropLast(1) + "\n)" // Ensure closing parenthesis is on a new line and indented
 }

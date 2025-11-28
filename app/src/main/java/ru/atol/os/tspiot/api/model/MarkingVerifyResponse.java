@@ -9,7 +9,6 @@ import androidx.annotation.Nullable;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Keep
 public final class MarkingVerifyResponse implements Parcelable {
@@ -99,15 +98,6 @@ public final class MarkingVerifyResponse implements Parcelable {
     public String getVersion() {
         return version;
     }
-
-//    /**
-//     * @see MarkingCodeInfoMapper#fillOfflineWithDefaults(MarkingCodeInfo)
-//     */
-//    @NonNull
-//    public List<MarkingCodeInfo> getCodesWithDefaults() {
-//        return codes.stream().map(MarkingCodeInfoMapper::fillOfflineWithDefaults)
-//                .collect(Collectors.toList());
-//    }
 
     @Override
     public boolean equals(Object o) {
