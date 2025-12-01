@@ -5,6 +5,7 @@ import android.os.Parcelable;
 
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.Objects;
 
@@ -23,23 +24,29 @@ public final class ClientInfo implements Parcelable {
     @NonNull
     private final String token;
 
+    @Nullable
+    private final String lastkey;
+
     public ClientInfo(
             @NonNull String name,
             @NonNull String version,
             @NonNull String id,
-            @NonNull String token
+            @NonNull String token,
+            @Nullable String lastkey
     ) {
         this.name = name;
         this.version = version;
         this.id = id;
         this.token = token;
+        this.lastkey = lastkey;
     }
 
-    ClientInfo(Parcel in) {
+    private ClientInfo(Parcel in) {
         name = Objects.requireNonNull(in.readString());
         version = Objects.requireNonNull(in.readString());
         id = Objects.requireNonNull(in.readString());
         token = Objects.requireNonNull(in.readString());
+        lastkey = in.readString();
     }
 
     @Override
@@ -48,6 +55,7 @@ public final class ClientInfo implements Parcelable {
         dest.writeString(version);
         dest.writeString(id);
         dest.writeString(token);
+        dest.writeString(lastkey);
     }
 
     @Override
@@ -55,7 +63,7 @@ public final class ClientInfo implements Parcelable {
         return 0;
     }
 
-    public static final Creator<ClientInfo> CREATOR = new Creator<ClientInfo>() {
+    public static final Creator<ClientInfo> CREATOR = new Creator<>() {
 
         @Override
         public ClientInfo createFromParcel(Parcel in) {
@@ -88,6 +96,11 @@ public final class ClientInfo implements Parcelable {
         return token;
     }
 
+    @Nullable
+    public String getLastKey() {
+        return lastkey;
+    }
+
     @Override
     public boolean equals(Object object) {
         if (this == object) return true;
@@ -110,6 +123,7 @@ public final class ClientInfo implements Parcelable {
                 ", version='" + version + '\'' +
                 ", id='" + id + '\'' +
                 ", token='" + token + '\'' +
+                ", lastkey='" + lastkey + '\'' +
                 '}';
     }
 }

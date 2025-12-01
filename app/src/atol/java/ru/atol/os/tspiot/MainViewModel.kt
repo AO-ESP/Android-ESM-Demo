@@ -35,7 +35,7 @@ class MainViewModel : ViewModel() {
         override fun onServiceDisconnected(name: ComponentName?) {
             iMarkingManager = null
             isBound = false
-            Log.d("MarkingManager", "Service disconnected")
+            Log.d("MarkingManager", "Service crashed or killed")
         }
     }
 
@@ -84,16 +84,24 @@ class MainViewModel : ViewModel() {
     }
 
     fun disconnectService(context: Context) {
-        context.unbindService(serviceConnection)
-        iMarkingManager = null
-        isBound = false
-        _uiState.update { state ->
-            state.copy(
-                isConnected = false,
-                isConnecting = false,
-                connectionStatus = "Отключено",
-                lastAction = "Сервис отключен"
-            )
+        try {
+            context.unbindService(serviceConnection)
+            Log.d("MarkingManager", "Service disconnected")
+            iMarkingManager = null
+            isBound = false
+            _uiState.update { state ->
+                state.copy(
+                    isConnected = false,
+                    isConnecting = false,
+                    connectionStatus = "Отключено",
+                    lastAction = "Сервис отключен",
+                    lastResult = "",
+                    lastError = "",
+                    isValid = null
+                )
+            }
+        } catch (e: Exception) {
+            throw e
         }
     }
 

@@ -36,7 +36,7 @@ class MainViewModel : ViewModel() {
         override fun onServiceDisconnected(name: ComponentName?) {
             iMarkingManager = null
             isBound = false
-            Log.d("MarkingManager", "Service disconnected")
+            Log.d("MarkingManager", "Service crashed or killed")
         }
     }
 
@@ -85,16 +85,24 @@ class MainViewModel : ViewModel() {
     }
 
     fun disconnectService(context: Context) {
-        context.unbindService(serviceConnection)
-        iMarkingManager = null
-        isBound = false
-        _uiState.update { state ->
-            state.copy(
-                isConnected = false,
-                isConnecting = false,
-                connectionStatus = "Отключено",
-                lastAction = "Сервис отключен"
-            )
+        try {
+            context.unbindService(serviceConnection)
+            Log.d("MarkingManager", "Service disconnected")
+            iMarkingManager = null
+            isBound = false
+            _uiState.update { state ->
+                state.copy(
+                    isConnected = false,
+                    isConnecting = false,
+                    connectionStatus = "Отключено",
+                    lastAction = "Сервис отключен",
+                    lastResult = "",
+                    lastError = "",
+                    isValid = null
+                )
+            }
+        } catch (e: Exception) {
+            throw e
         }
     }
 
@@ -111,17 +119,6 @@ class MainViewModel : ViewModel() {
         }
 
         try {
-            val clientInfo = ClientInfo(
-                "ESM Test",
-                "1.0",
-                "id",
-                "token"
-            )
-            val testRequest = MarkingVerifyRequest(
-                listOf("0104602220006549215opFcmK\u001d93dGVz"),
-                clientInfo
-            )
-
             val callback = object : IBundleResultCallback.Stub() {
                 override fun onSuccess(bundle: Bundle) {
                     bundle.classLoader = MarkingVerifyResponse::class.java.classLoader
@@ -153,6 +150,18 @@ class MainViewModel : ViewModel() {
                     }
                 }
             }
+
+            val clientInfo = ClientInfo(
+                "ESM Test",
+                "1.0",
+                "90911ffe-47da-4a71-86bb-be455f3d9614",
+                "90911ffe-47da-4a71-86bb-be455f3d9614",
+                null
+            )
+            val testRequest = MarkingVerifyRequest(
+                listOf("0104602220006549215opFcmK\u001d93dGVz"),
+                clientInfo
+            )
 
             service.requestCheck(callback, testRequest)
 

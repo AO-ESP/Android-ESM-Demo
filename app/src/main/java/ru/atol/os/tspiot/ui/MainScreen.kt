@@ -133,13 +133,13 @@ fun MainScreen(
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = "Результат проверки",
+                            text = "Ответ ТС ПИоТ",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = if (uiState.isValid == true) "✓ Валидно" else "✗ Невалидно",
+                            text = if (uiState.isValid == true) "✓ Success" else "✗ Error",
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
