@@ -9,16 +9,22 @@ import android.os.Bundle
 import android.os.IBinder
 import android.os.RemoteException
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
-import ru.atol.os.tspiot.api.IBundleResultCallback
-import ru.atol.os.tspiot.api.IMarkingManager
+import kotlinx.coroutines.launch
 import ru.atol.os.tspiot.api.model.ClientInfo
 import ru.atol.os.tspiot.api.model.MarkingVerifyRequest
 import ru.atol.os.tspiot.api.model.MarkingVerifyResponse
+import ru.atol.os.tspiot.domain.ScanResult
 import ru.atol.os.tspiot.ui.MarkingServiceState
+import ru.esm.tspiot.api.IBundleResultCallback
+import ru.esm.tspiot.api.IMarkingManager
 import toPrettyString
 
 class MainViewModel : ViewModel() {
@@ -26,6 +32,12 @@ class MainViewModel : ViewModel() {
     private var iMarkingManager: IMarkingManager? = null
     private val _uiState = MutableStateFlow(MarkingServiceState())
     val uiState: StateFlow<MarkingServiceState> = _uiState
+
+    val isScanning = mutableStateOf(false)
+    private val _scanResult = MutableSharedFlow<ScanResult?>(replay = 1)
+    val scanResult = _scanResult.asSharedFlow()
+    val errorMessage = mutableStateOf<String?>(null)
+
     private var serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             iMarkingManager = IMarkingManager.Stub.asInterface(service)
@@ -46,8 +58,8 @@ class MainViewModel : ViewModel() {
         _uiState.update { it.copy(isConnecting = true, connectionStatus = "Подключение...") }
 
         try {
-            val intent = Intent("ru.atol.os.tspiot.action.ACTION_MARKING_MANAGER").apply {
-                setPackage("ru.atol.os.tspiot") // Пакет приложения-источника
+            val intent = Intent("ru.esm.tspiot.action.ACTION_MARKING_MANAGER").apply {
+                setPackage("ru.esp.tspiot") // Пакет приложения-источника
             }
             val bound = context.bindService(
                 intent,
@@ -88,6 +100,7 @@ class MainViewModel : ViewModel() {
         try {
             context.unbindService(serviceConnection)
             Log.d("MarkingManager", "Service disconnected")
+            clearResult()
             iMarkingManager = null
             isBound = false
             _uiState.update { state ->
@@ -106,7 +119,14 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun testRequest() {
+    fun testRequest(code: String?) {
+        _uiState.update { state ->
+            state.copy(
+                lastResult = "",
+                lastError = "",
+                isValid = null
+            )
+        }
         val service = iMarkingManager
         if (service == null) {
             _uiState.update { state ->
@@ -158,12 +178,16 @@ class MainViewModel : ViewModel() {
                 "90911ffe-47da-4a71-86bb-be455f3d9614",
                 null
             )
-            val testRequest = MarkingVerifyRequest(
-                listOf("0104602220006549215opFcmK\u001d93dGVz"),
-                clientInfo
-            )
 
-            service.requestCheck(callback, testRequest)
+            val testRequest = code?.let { mark ->
+                MarkingVerifyRequest(
+                    listOf(if (mark.startsWith("\\u")) mark.substring(2) else mark),
+                    clientInfo
+                )
+            }
+
+            testRequest?.let { service.requestCheck(callback, testRequest) }
+                ?: throw IllegalStateException("Марка не найдена")
 
             _uiState.update { state ->
                 state.copy(
@@ -192,5 +216,38 @@ class MainViewModel : ViewModel() {
     override fun onCleared() {
         iMarkingManager = null
         super.onCleared()
+    }
+
+    fun startScanning() {
+        viewModelScope.launch {
+            isScanning.value = true
+            _scanResult.emit(null)
+            errorMessage.value = null
+        }
+    }
+
+    fun stopScanning() {
+        isScanning.value = false
+    }
+
+    fun onScanResult(result: ScanResult) {
+        viewModelScope.launch {
+            val charToRemove = "\u001D"
+            val trimmedMark = result.text.removePrefix(charToRemove)
+            _scanResult.emit(result.copy(text = trimmedMark))
+            stopScanning()
+        }
+    }
+
+    fun onScanError(error: String) {
+        errorMessage.value = error
+        stopScanning()
+    }
+
+    fun clearResult() {
+        viewModelScope.launch {
+            _scanResult.emit(null)
+            errorMessage.value = null
+        }
     }
 }

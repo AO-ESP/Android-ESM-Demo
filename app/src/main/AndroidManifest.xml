@@ -1,7 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+
     <queries>
+        <intent>
+            <action android:name="ru.esm.tspiot.action.ACTION_MARKING_MANAGER" />
+        </intent>
         <intent>
             <action android:name="ru.atol.os.tspiot.action.ACTION_MARKING_MANAGER" />
         </intent>
@@ -20,7 +32,6 @@
         <activity
             android:name="ru.atol.os.tspiot.MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.ESMDemo">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
