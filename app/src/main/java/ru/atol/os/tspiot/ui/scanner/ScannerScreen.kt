@@ -27,8 +27,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ru.atol.os.tspiot.MainViewModel
 import ru.atol.os.tspiot.domain.ScanResult
+import ru.esm.tspiot.MainViewModel
 
 @Composable
 fun ScannerScreen(

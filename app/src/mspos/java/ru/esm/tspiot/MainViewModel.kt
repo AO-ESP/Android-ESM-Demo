@@ -1,4 +1,4 @@
-package ru.atol.os.tspiot
+package ru.esm.tspiot
 
 import android.content.ComponentName
 import android.content.Context
@@ -18,13 +18,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import ru.atol.os.tspiot.api.model.ClientInfo
-import ru.atol.os.tspiot.api.model.MarkingVerifyRequest
-import ru.atol.os.tspiot.api.model.MarkingVerifyResponse
 import ru.atol.os.tspiot.domain.ScanResult
 import ru.atol.os.tspiot.ui.MarkingServiceState
 import ru.esm.tspiot.api.IBundleResultCallback
 import ru.esm.tspiot.api.IMarkingManager
+import ru.esm.tspiot.api.model.ClientInfo
+import ru.esm.tspiot.api.model.MarkingVerifyRequest
+import ru.esm.tspiot.api.model.MarkingVerifyResponse
 import toPrettyString
 
 class MainViewModel : ViewModel() {

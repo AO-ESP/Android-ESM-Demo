@@ -46,9 +46,9 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import ru.atol.os.tspiot.MainViewModel
 import ru.atol.os.tspiot.ui.scanner.PermissionScreen
 import ru.atol.os.tspiot.ui.scanner.ScannerScreen
+import ru.esm.tspiot.MainViewModel
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable

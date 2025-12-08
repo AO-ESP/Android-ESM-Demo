@@ -1,4 +1,4 @@
-package ru.atol.os.tspiot.api.model;
+package ru.esm.tspiot.api.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
