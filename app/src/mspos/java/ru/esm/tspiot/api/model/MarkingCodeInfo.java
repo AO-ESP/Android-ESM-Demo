@@ -1,5 +1,6 @@
 package ru.esm.tspiot.api.model;
 
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -252,11 +253,16 @@ public final class MarkingCodeInfo implements Parcelable {
     }
 
     private static final String DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+    private static final String DATE_TIME_PATTERN_FOR_API_23 = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
     @Nullable
     public Date getExpireDateAsDate() throws ParseException {
         if (expireDate != null) {
-            return new SimpleDateFormat(DATE_TIME_PATTERN, Locale.ROOT).parse(expireDate);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                return new SimpleDateFormat(DATE_TIME_PATTERN, Locale.ROOT).parse(expireDate);
+            } else {
+                return new SimpleDateFormat(DATE_TIME_PATTERN_FOR_API_23, Locale.ROOT).parse(expireDate);
+            }
         }
         return null;
     }
@@ -279,7 +285,11 @@ public final class MarkingCodeInfo implements Parcelable {
     @Nullable
     public Date getProductionDateAsDate() throws ParseException {
         if (productionDate != null) {
-            return new SimpleDateFormat(DATE_TIME_PATTERN, Locale.ROOT).parse(productionDate);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                return new SimpleDateFormat(DATE_TIME_PATTERN, Locale.ROOT).parse(productionDate);
+            } else {
+                return new SimpleDateFormat(DATE_TIME_PATTERN_FOR_API_23, Locale.ROOT).parse(productionDate);
+            }
         }
         return null;
     }
