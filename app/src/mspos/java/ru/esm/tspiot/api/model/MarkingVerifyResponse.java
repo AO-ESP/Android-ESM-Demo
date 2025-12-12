@@ -42,9 +42,9 @@ public final class MarkingVerifyResponse implements Parcelable {
     }
 
     MarkingVerifyResponse(Parcel in) {
-        codes = in.createTypedArrayList(MarkingCodeInfo.CREATOR);
+        codes = Objects.requireNonNull(in.createTypedArrayList(MarkingCodeInfo.CREATOR));
         reqTimestamp = in.readLong();
-        reqId = in.readString();
+        reqId = Objects.requireNonNull(in.readString());
         inst = in.readString();
         version = in.readString();
     }
@@ -114,6 +114,7 @@ public final class MarkingVerifyResponse implements Parcelable {
         return Objects.hash(codes, reqTimestamp, reqId, inst, version);
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "MarkingVerifyResponse{" +

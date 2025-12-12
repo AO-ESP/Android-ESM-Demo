@@ -1,4 +1,4 @@
-package ru.atol.os.tspiot.ui
+package ru.esm.tspiot.ui
 
 data class MarkingServiceState(
     val isConnected: Boolean = false,

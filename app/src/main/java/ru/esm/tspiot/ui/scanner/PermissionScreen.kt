@@ -1,4 +1,4 @@
-package ru.atol.os.tspiot.ui.scanner
+package ru.esm.tspiot.ui.scanner
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -83,7 +84,7 @@ fun PermissionScreen(
 
         Button(
             onClick = onBack,
-            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+            colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.secondaryContainer
             )
         ) {

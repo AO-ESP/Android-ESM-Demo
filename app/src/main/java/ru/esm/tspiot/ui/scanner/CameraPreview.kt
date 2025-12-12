@@ -1,4 +1,4 @@
-package ru.atol.os.tspiot.ui.scanner
+package ru.esm.tspiot.ui.scanner
 
 import android.annotation.SuppressLint
 import android.util.Log

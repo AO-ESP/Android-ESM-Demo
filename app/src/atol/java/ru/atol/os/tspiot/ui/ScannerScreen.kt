@@ -1,5 +1,6 @@
-package ru.atol.os.tspiot.ui.scanner
+package ru.esm.tspiot.ui.scanner
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,12 +24,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ru.atol.os.tspiot.domain.ScanResult
-import ru.esm.tspiot.MainViewModel
+import ru.atol.os.tspiot.MainViewModel
+import ru.esm.tspiot.domain.ScanResult
 
 @Composable
 fun ScannerScreen(
@@ -53,7 +55,7 @@ fun ScannerScreen(
                 .padding(32.dp),
             contentAlignment = Alignment.Center
         ) {
-            androidx.compose.foundation.Canvas(
+            Canvas(
                 modifier = Modifier.size(250.dp)
             ) {
                 drawRect(
@@ -63,7 +65,7 @@ fun ScannerScreen(
                 drawRect(
                     color = Color.Green.copy(alpha = 0.3f),
                     size = size,
-                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 4f)
+                    style = Stroke(width = 4f)
                 )
             }
         }

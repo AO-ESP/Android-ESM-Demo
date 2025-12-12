@@ -30,7 +30,7 @@
         android:theme="@style/Theme.ESMDemo">
 
         <activity
-            android:name="ru.atol.os.tspiot.MainActivity"
+            android:name="ru.esm.tspiot.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.ESMDemo">
             <intent-filter>

@@ -22,22 +22,33 @@ public final class MarkingVerifyRequest implements Parcelable {
     @Nullable
     private final String fnNumber;
 
-    public MarkingVerifyRequest(@NonNull List<String> codes) {
+    @NonNull
+    private final ClientInfo clientInfo;
+
+    public MarkingVerifyRequest(@NonNull List<String> codes, @NonNull ClientInfo clientInfo) {
         this.codes = codes;
         this.inn = null;
         this.fnNumber = null;
+        this.clientInfo = clientInfo;
     }
 
-    public MarkingVerifyRequest(@NonNull List<String> codes, @Nullable String inn, @Nullable String fnNumber) {
+    public MarkingVerifyRequest(
+            @NonNull List<String> codes,
+            @Nullable String inn,
+            @Nullable String fnNumber,
+            @NonNull ClientInfo clientInfo
+    ) {
         this.codes = codes;
         this.inn = inn;
         this.fnNumber = fnNumber;
+        this.clientInfo = clientInfo;
     }
 
     private MarkingVerifyRequest(Parcel in) {
         codes = Objects.requireNonNull(in.createStringArrayList());
         inn = in.readString();
         fnNumber = in.readString();
+        clientInfo = Objects.requireNonNull(in.readParcelable(ClientInfo.class.getClassLoader()));
     }
 
     @Override
@@ -45,6 +56,7 @@ public final class MarkingVerifyRequest implements Parcelable {
         dest.writeStringList(codes);
         dest.writeString(inn);
         dest.writeString(fnNumber);
+        dest.writeParcelable(clientInfo, flags);
     }
 
     @Override
@@ -79,12 +91,20 @@ public final class MarkingVerifyRequest implements Parcelable {
         return inn;
     }
 
+    @NonNull
+    public ClientInfo getClientInfo() {
+        return clientInfo;
+    }
+
+    @NonNull
     @Override
     public String toString() {
         return "MarkingVerifyRequest{" +
                 "codes=" + codes +
                 ", inn='" + inn + '\'' +
                 ", fnNumber='" + fnNumber + '\'' +
+                ", clientInfo=" + clientInfo +
+                ", clientInfo=" + clientInfo +
                 '}';
     }
 }

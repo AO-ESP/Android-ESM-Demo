@@ -1,4 +1,4 @@
-package ru.atol.os.tspiot.ui.theme
+package ru.esm.tspiot.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

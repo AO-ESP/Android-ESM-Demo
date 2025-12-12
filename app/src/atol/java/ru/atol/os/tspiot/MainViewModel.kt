@@ -20,10 +20,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.atol.os.tspiot.api.IBundleResultCallback
 import ru.atol.os.tspiot.api.IMarkingManager
+import ru.atol.os.tspiot.api.model.ClientInfo
 import ru.atol.os.tspiot.api.model.MarkingVerifyRequest
 import ru.atol.os.tspiot.api.model.MarkingVerifyResponse
-import ru.atol.os.tspiot.domain.ScanResult
-import ru.atol.os.tspiot.ui.MarkingServiceState
+import ru.esm.tspiot.domain.ScanResult
+import ru.esm.tspiot.ui.MarkingServiceState
 import toPrettyString
 
 class MainViewModel : ViewModel() {
@@ -32,7 +33,6 @@ class MainViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(MarkingServiceState())
     val uiState: StateFlow<MarkingServiceState> = _uiState
 
-    // Scanning state
     val isScanning = mutableStateOf(false)
     private val _scanResult = MutableSharedFlow<ScanResult?>(replay = 1)
     val scanResult = _scanResult.asSharedFlow()
@@ -58,8 +58,8 @@ class MainViewModel : ViewModel() {
         _uiState.update { it.copy(isConnecting = true, connectionStatus = "Подключение...") }
 
         try {
-            val intent = Intent("ru.atol.os.tspiot.action.ACTION_MARKING_MANAGER").apply {
-                setPackage("ru.atol.os.tspiot") // Пакет приложения-источника
+            val intent = Intent("ru.esm.tspiot.action.ACTION_MARKING_MANAGER").apply {
+                setPackage("ru.esp.tspiot") // Пакет приложения-источника
             }
             val bound = context.bindService(
                 intent,
@@ -139,10 +139,6 @@ class MainViewModel : ViewModel() {
         }
 
         try {
-            val testRequest = MarkingVerifyRequest(
-                listOf("0104602220006549215opFcmK\u001d93dGVz"),
-            )
-
             val callback = object : IBundleResultCallback.Stub() {
                 override fun onSuccess(bundle: Bundle) {
                     bundle.classLoader = MarkingVerifyResponse::class.java.classLoader
@@ -175,7 +171,24 @@ class MainViewModel : ViewModel() {
                 }
             }
 
-            service.requestCheck(callback, testRequest)
+            val clientInfo = ClientInfo(
+                "ESM Test",
+                "1.0",
+                "90911ffe-47da-4a71-86bb-be455f3d9614",
+                "90911ffe-47da-4a71-86bb-be455f3d9614",
+                null
+            )
+
+            val testRequest = code?.let { mark ->
+                MarkingVerifyRequest(
+                    listOf(if (mark.startsWith("\\u")) mark.substring(2) else mark),
+                    clientInfo
+                )
+            }
+
+            testRequest?.let { service.requestCheck(callback, testRequest) }
+                ?: throw IllegalStateException("Марка не найдена")
+
             _uiState.update { state ->
                 state.copy(
                     lastAction = "Запрос отправлен..."
@@ -187,6 +200,14 @@ class MainViewModel : ViewModel() {
                 state.copy(
                     lastError = "Ошибка связи: ${e.message}",
                     lastAction = "Ошибка при вызове сервиса"
+                )
+            }
+        } catch (e: Exception) {
+            Log.d("MainViewModel", e.message ?: e.stackTraceToString())
+            _uiState.update { state ->
+                state.copy(
+                    lastError = "Ошибка: ${e.message ?: e.stackTraceToString()}",
+                    lastAction = "Ошибка"
                 )
             }
         }

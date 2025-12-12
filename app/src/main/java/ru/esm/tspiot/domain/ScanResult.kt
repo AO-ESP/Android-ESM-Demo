@@ -1,4 +1,4 @@
-package ru.atol.os.tspiot.domain
+package ru.esm.tspiot.domain
 
 data class ScanResult(
     val text: String,
