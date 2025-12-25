@@ -58,8 +58,8 @@ class MainViewModel : ViewModel() {
         _uiState.update { it.copy(isConnecting = true, connectionStatus = "Подключение...") }
 
         try {
-            val intent = Intent("ru.esm.tspiot.action.ACTION_MARKING_MANAGER").apply {
-                setPackage("ru.esp.tspiot") // Пакет приложения-источника
+            val intent = Intent("ru.atol.os.tspiot.action.ACTION_MARKING_MANAGER").apply {
+                setPackage("ru.atol.os.tspiot") // Пакет приложения-источника
             }
             val bound = context.bindService(
                 intent,
