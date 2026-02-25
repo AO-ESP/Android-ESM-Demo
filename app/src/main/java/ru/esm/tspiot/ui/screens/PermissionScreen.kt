@@ -1,5 +1,6 @@
-package ru.esm.tspiot.ui.scanner
+package ru.esm.tspiot.ui.screens
 
+import android.Manifest
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -22,15 +23,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.PermissionState
+import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun PermissionScreen(
-    permissionState: PermissionState,
     onBack: () -> Unit
 ) {
+    val permissionState = rememberPermissionState(
+        permission = Manifest.permission.CAMERA
+    )
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -57,7 +60,7 @@ fun PermissionScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Этому приложению нужен доступ к камере для сканирования кодов маркировки.",
+            text = "Этому приложению нужен доступ к камере для сканирования кодов маркировки",
             textAlign = TextAlign.Center,
             fontSize = 16.sp
         )

@@ -29,20 +29,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ru.atol.os.tspiot.MainViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import ru.esm.tspiot.domain.ScanResult
 
 @Composable
 fun ScannerScreen(
-    viewModel: MainViewModel,
-    onBack: () -> Unit
+    navController: NavHostController,
+    viewModel: ScannerViewModel = hiltViewModel()
 ) {
     val scanResult: ScanResult? = viewModel.scanResult.collectAsState(null).value
+    val isScanning: Boolean? = viewModel.isScanning.collectAsState(null).value
 
     Box(modifier = Modifier.fillMaxSize()) {
         CameraPreview(
             onBarcodeScanned = { text, format ->
-                viewModel.onScanResult(ScanResult(text, format))
+                viewModel.onScanResult(
+                    ScanResult(
+                        if (text.startsWith("\\u")) text.substring(2) else text,
+                        format
+                    )
+                )
             },
             onError = { error ->
                 viewModel.onScanError(error)
@@ -76,11 +83,11 @@ fun ScannerScreen(
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Button(onClick = { onBack.invoke() }) {
+            Button(onClick = { navController.popBackStack() }) {
                 Text("Назад")
             }
 
-            if (viewModel.isScanning.value) {
+            if (isScanning == true) {
                 CircularProgressIndicator(
                     color = Color.White,
                     strokeWidth = 2.dp
@@ -152,7 +159,7 @@ fun ScannerScreen(
                             }
 
                             Button(
-                                onClick = { onBack.invoke() },
+                                onClick = { navController.popBackStack() },
                             ) {
                                 Text("Готово")
                             }

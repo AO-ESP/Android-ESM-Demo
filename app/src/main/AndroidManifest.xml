@@ -17,9 +17,13 @@
         <intent>
             <action android:name="ru.atol.os.tspiot.action.ACTION_MARKING_MANAGER" />
         </intent>
+        <intent>
+            <action android:name="ru.esp.esm.action.ACTION_ESM_SERVICE" />
+        </intent>
     </queries>
 
     <application
+        android:name="ru.esm.tspiot.App"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -30,7 +34,7 @@
         android:theme="@style/Theme.ESMDemo">
 
         <activity
-            android:name="ru.esm.tspiot.MainActivity"
+            android:name="ru.esm.tspiot.ui.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.ESMDemo">
             <intent-filter>
