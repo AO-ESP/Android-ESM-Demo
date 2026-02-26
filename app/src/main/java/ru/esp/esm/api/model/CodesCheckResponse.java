@@ -1,28 +1,32 @@
 package ru.esp.esm.api.model;
 
-import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Keep
 public final class CodesCheckResponse implements Parcelable {
+    private static final String TAG = "CodesCheckResponse";
+    private final int code;
 
+    @NonNull
+    private final String description;
     @NonNull
     private final List<MarkingCodeInfo> codes;
 
-    private final long reqTimestamp;
-
     @NonNull
     private final String reqId;
+
+    private final long reqTimestamp;
+
+    private final boolean isCheckedOffline;
 
     @Nullable
     private final String inst;
@@ -31,32 +35,44 @@ public final class CodesCheckResponse implements Parcelable {
     private final String version;
 
     public CodesCheckResponse(
+            int code,
+            @NonNull String description,
             @NonNull List<MarkingCodeInfo> codes,
-            long reqTimestamp,
             @NonNull String reqId,
+            long reqTimestamp,
+            boolean isCheckedOffline,
             @Nullable String inst,
             @Nullable String version
     ) {
+        this.code = code;
+        this.description = description;
         this.codes = codes;
-        this.reqTimestamp = reqTimestamp;
         this.reqId = reqId;
+        this.reqTimestamp = reqTimestamp;
+        this.isCheckedOffline = isCheckedOffline;
         this.inst = inst;
         this.version = version;
     }
 
     CodesCheckResponse(Parcel in) {
+        code = in.readInt();
+        description = Objects.requireNonNull(in.readString());
         codes = Objects.requireNonNull(in.createTypedArrayList(MarkingCodeInfo.CREATOR));
-        reqTimestamp = in.readLong();
         reqId = Objects.requireNonNull(in.readString());
+        reqTimestamp = in.readLong();
+        isCheckedOffline = in.readByte() != 0;
         inst = in.readString();
         version = in.readString();
     }
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(code);
+        dest.writeString(description);
         dest.writeTypedList(codes);
-        dest.writeLong(reqTimestamp);
         dest.writeString(reqId);
+        dest.writeLong(reqTimestamp);
+        dest.writeByte((byte) (isCheckedOffline ? 1 : 0));
         dest.writeString(inst);
         dest.writeString(version);
     }
@@ -66,10 +82,15 @@ public final class CodesCheckResponse implements Parcelable {
         return 0;
     }
 
-    public static final Creator<CodesCheckResponse> CREATOR = new Creator<CodesCheckResponse>() {
+    public static final Creator<CodesCheckResponse> CREATOR = new Creator<>() {
         @Override
         public CodesCheckResponse createFromParcel(Parcel in) {
-            return new CodesCheckResponse(in);
+            try {
+                return new CodesCheckResponse(in);
+            } catch (Exception e) {
+                Log.e(TAG, "Error unparceling CodesCheckResponse", e);
+                throw new IllegalStateException("Failed to create CodesCheckResponse from Parcel", e);
+            }
         }
 
         @Override
@@ -78,8 +99,18 @@ public final class CodesCheckResponse implements Parcelable {
         }
     };
 
-    public long getReqTimestamp() {
-        return reqTimestamp;
+    public int getCode() {
+        return code;
+    }
+
+    @NonNull
+    public String getDescription() {
+        return description;
+    }
+
+    @NonNull
+    public List<MarkingCodeInfo> getCodes() {
+        return codes;
     }
 
     @NonNull
@@ -87,9 +118,12 @@ public final class CodesCheckResponse implements Parcelable {
         return reqId;
     }
 
-    @NonNull
-    public List<MarkingCodeInfo> getCodes() {
-        return codes;
+    public long getReqTimestamp() {
+        return reqTimestamp;
+    }
+
+    public boolean isCheckedOffline() {
+        return isCheckedOffline;
     }
 
     @Nullable
@@ -102,45 +136,31 @@ public final class CodesCheckResponse implements Parcelable {
         return version;
     }
 
-    /**
-     * @see MarkingCodeInfoMapper#fillOfflineWithDefaults(MarkingCodeInfo)
-     */
-    @NonNull
-    public List<MarkingCodeInfo> getCodesWithDefaults() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            return codes.stream().map(MarkingCodeInfoMapper::fillOfflineWithDefaults)
-                    .collect(Collectors.toList());
-        } else {
-            List<MarkingCodeInfo> result = new ArrayList<>(codes.size());
-            for (MarkingCodeInfo code : codes) {
-                result.add(MarkingCodeInfoMapper.fillOfflineWithDefaults(code));
-            }
-            return result;
-        }
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof CodesCheckResponse)) return false;
-        CodesCheckResponse that = (CodesCheckResponse) o;
-        return reqTimestamp == that.reqTimestamp && Objects.equals(codes, that.codes) &&
-                Objects.equals(reqId, that.reqId) && Objects.equals(inst, that.inst) &&
-                Objects.equals(version, that.version);
+        if (!(o instanceof CodesCheckResponse that)) return false;
+        return code == that.code && reqTimestamp == that.reqTimestamp &&
+                Objects.equals(description, that.description) && isCheckedOffline == that.isCheckedOffline &&
+                Objects.equals(codes, that.codes) && Objects.equals(reqId, that.reqId) &&
+                Objects.equals(inst, that.inst) && Objects.equals(version, that.version);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(codes, reqTimestamp, reqId, inst, version);
+        return Objects.hash(code, description, codes, reqId, reqTimestamp, isCheckedOffline, inst, version);
     }
 
     @NonNull
     @Override
     public String toString() {
         return "CodesCheckResponse{" +
-                "codes=" + codes +
-                ", reqTimestamp=" + reqTimestamp +
+                "code=" + code +
+                ", description='" + description + '\'' +
+                ", codes=" + codes +
                 ", reqId='" + reqId + '\'' +
+                ", reqTimestamp=" + reqTimestamp +
+                ", isCheckedOffline=" + isCheckedOffline +
                 ", inst='" + inst + '\'' +
                 ", version='" + version + '\'' +
                 '}';

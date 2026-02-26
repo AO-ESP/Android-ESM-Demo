@@ -35,6 +35,7 @@ import ru.atol.os.tspiot.presentation.ui.navigation.AppRoute
 import ru.esm.tspiot.ui.items.MethodSection
 import ru.esm.tspiot.ui.scanner.ScannerViewModel
 import ru.esm.tspiot.ui.viewmodels.CodesCheckViewModel
+import ru.esp.esm.api.model.Cis
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -121,7 +122,7 @@ fun CodesCheckScreen(
                         title = "Метод codesCheck (AIDL version 2)",
                         onClick = {
                             viewModel.codesCheck(
-                                listOf(it)
+                                listOf(Cis(it, 34))
                             )
                         },
                         result = resultV1

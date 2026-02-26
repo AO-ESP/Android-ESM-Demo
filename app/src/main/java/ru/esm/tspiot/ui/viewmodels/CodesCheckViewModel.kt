@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import ru.esm.tspiot.data.EsmServiceClient
 import ru.esm.tspiot.domain.EsmResult
+import ru.esp.esm.api.model.Cis
+import ru.esp.esm.api.model.CisList
 import ru.esp.esm.api.model.ClientInfo
 import ru.esp.esm.api.model.CodesCheckRequest
 import ru.esp.esm.api.model.CodesCheckResponse
@@ -34,12 +36,14 @@ class CodesCheckViewModel @Inject constructor(
         null
     )
 
-    fun codesCheck(codes: List<String>) {
+    fun codesCheck(codes: List<Cis>) {
         viewModelScope.launch {
             Log.d(TAG, "codesCheck called")
+            val cisList = CisList(codes, 2)
+
             val esmResult = esmServiceClient.codesCheck(
                 CodesCheckRequest(
-                    codes,
+                    cisList,
                     clientInfo
                 )
             )

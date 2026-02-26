@@ -2,11 +2,13 @@ package ru.esp.esm.api.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +16,7 @@ import java.util.Objects;
 
 @Keep
 public final class MarkingCodeInfo implements Parcelable {
+    private static final String TAG = "MarkingCodeInfo";
     @NonNull
     private final String cis;
     @Nullable
@@ -25,9 +28,9 @@ public final class MarkingCodeInfo implements Parcelable {
     @Nullable
     private final String gtin;
     @Nullable
-    private final Boolean isGreyGtin;
+    private final Boolean isGreyGtin; // Уточнить, в протоколе нет
     @Nullable
-    private final List<String> groupId;
+    private final List<Integer> groupIds;
     @Nullable
     private final Boolean verified;
     @Nullable
@@ -85,10 +88,6 @@ public final class MarkingCodeInfo implements Parcelable {
     @Nullable
     private final String factorySerialNumber;
 
-    private final boolean isFromOnlineServer;
-    @Nullable
-    private final Long duration;
-
     private MarkingCodeInfo(
             @NonNull String cis,
             @Nullable Boolean found,
@@ -96,7 +95,7 @@ public final class MarkingCodeInfo implements Parcelable {
             @Nullable String printView,
             @Nullable String gtin,
             @Nullable Boolean isGreyGtin,
-            @Nullable List<String> groupId,
+            @Nullable List<Integer> groupIds,
             @Nullable Boolean verified,
             @Nullable Boolean realizable,
             @Nullable Boolean utilised,
@@ -124,9 +123,7 @@ public final class MarkingCodeInfo implements Parcelable {
             @Nullable String producerInn,
             @Nullable String productionSerialNumber,
             @Nullable String productionBatchNumber,
-            @Nullable String factorySerialNumber,
-            boolean isFromOnlineServer,
-            @Nullable Long duration
+            @Nullable String factorySerialNumber
     ) {
         this.cis = cis;
         this.found = found;
@@ -134,7 +131,7 @@ public final class MarkingCodeInfo implements Parcelable {
         this.printView = printView;
         this.gtin = gtin;
         this.isGreyGtin = isGreyGtin;
-        this.groupId = groupId;
+        this.groupIds = groupIds;
         this.verified = verified;
         this.realizable = realizable;
         this.utilised = utilised;
@@ -163,8 +160,6 @@ public final class MarkingCodeInfo implements Parcelable {
         this.productionSerialNumber = productionSerialNumber;
         this.productionBatchNumber = productionBatchNumber;
         this.factorySerialNumber = factorySerialNumber;
-        this.isFromOnlineServer = isFromOnlineServer;
-        this.duration = duration;
     }
 
     private MarkingCodeInfo(Parcel in) {
@@ -175,7 +170,7 @@ public final class MarkingCodeInfo implements Parcelable {
         printView = parcelUtils.readNullableString(in);
         gtin = parcelUtils.readNullableString(in);
         isGreyGtin = parcelUtils.readNullableBoolean(in);
-        groupId = parcelUtils.readNullableStringList(in);
+        groupIds = parcelUtils.readNullableIntegerList(in);
         verified = parcelUtils.readNullableBoolean(in);
         realizable = parcelUtils.readNullableBoolean(in);
         utilised = parcelUtils.readNullableBoolean(in);
@@ -204,8 +199,6 @@ public final class MarkingCodeInfo implements Parcelable {
         productionSerialNumber = parcelUtils.readNullableString(in);
         productionBatchNumber = parcelUtils.readNullableString(in);
         factorySerialNumber = parcelUtils.readNullableString(in);
-        isFromOnlineServer = in.readByte() != 0;
-        duration = parcelUtils.readNullableLong(in);
     }
 
     @Override
@@ -217,7 +210,7 @@ public final class MarkingCodeInfo implements Parcelable {
         parcelUtils.writeNullableString(dest, printView);
         parcelUtils.writeNullableString(dest, gtin);
         parcelUtils.writeNullableBoolean(dest, isGreyGtin);
-        parcelUtils.writeNullableStringList(dest, groupId);
+        parcelUtils.writeNullableIntegerList(dest, groupIds);
         parcelUtils.writeNullableBoolean(dest, verified);
         parcelUtils.writeNullableBoolean(dest, realizable);
         parcelUtils.writeNullableBoolean(dest, utilised);
@@ -246,8 +239,6 @@ public final class MarkingCodeInfo implements Parcelable {
         parcelUtils.writeNullableString(dest, productionSerialNumber);
         parcelUtils.writeNullableString(dest, productionBatchNumber);
         parcelUtils.writeNullableString(dest, factorySerialNumber);
-        dest.writeByte((byte) (isFromOnlineServer ? 1 : 0));
-        parcelUtils.writeNullableLong(dest, duration);
     }
 
     @Override
@@ -258,7 +249,13 @@ public final class MarkingCodeInfo implements Parcelable {
     public static final Creator<MarkingCodeInfo> CREATOR = new Creator<>() {
         @Override
         public MarkingCodeInfo createFromParcel(Parcel in) {
-            return new MarkingCodeInfo(in);
+            try {
+                return new MarkingCodeInfo(in);
+            } catch (Exception e) {
+                Log.e(TAG, "Error unparceling CodesCheckResponse", e);
+                throw new IllegalStateException("Failed to create CodesCheckResponse from Parcel", e);
+            }
+
         }
 
         @Override
@@ -298,8 +295,8 @@ public final class MarkingCodeInfo implements Parcelable {
     }
 
     @Nullable
-    public List<String> getGroupId() {
-        return groupId;
+    public List<Integer> getGroupIds() {
+        return groupIds;
     }
 
     @Nullable
@@ -441,25 +438,12 @@ public final class MarkingCodeInfo implements Parcelable {
         return factorySerialNumber;
     }
 
-    public boolean isFromOnlineServer() {
-        return isFromOnlineServer;
-    }
-
-    public boolean isFromOfflineServer() {
-        return !isFromOnlineServer;
-    }
-
-    @Nullable
-    public Long getDuration() {
-        return duration;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof MarkingCodeInfo)) return false;
 
         MarkingCodeInfo that = (MarkingCodeInfo) o;
-        return isFromOnlineServer == that.isFromOnlineServer && cis.equals(that.cis) && Objects.equals(found, that.found) && Objects.equals(valid, that.valid) && Objects.equals(printView, that.printView) && Objects.equals(gtin, that.gtin) && Objects.equals(isGreyGtin, that.isGreyGtin) && Objects.equals(groupId, that.groupId) && Objects.equals(verified, that.verified) && Objects.equals(realizable, that.realizable) && Objects.equals(utilised, that.utilised) && Objects.equals(expireDate, that.expireDate) && Objects.equals(variableExpirations, that.variableExpirations) && Objects.equals(productionDate, that.productionDate) && Objects.equals(productWeight, that.productWeight) && Objects.equals(prVetDocument, that.prVetDocument) && Objects.equals(isOwner, that.isOwner) && Objects.equals(isBlocked, that.isBlocked) && Objects.equals(ogvs, that.ogvs) && Objects.equals(message, that.message) && Objects.equals(errorCode, that.errorCode) && Objects.equals(isTracking, that.isTracking) && Objects.equals(sold, that.sold) && Objects.equals(eliminationState, that.eliminationState) && Objects.equals(mrp, that.mrp) && Objects.equals(smp, that.smp) && Objects.equals(grayZone, that.grayZone) && Objects.equals(innerUnitCount, that.innerUnitCount) && Objects.equals(soldUnitCount, that.soldUnitCount) && Objects.equals(packageType, that.packageType) && Objects.equals(packageQuantity, that.packageQuantity) && Objects.equals(parent, that.parent) && Objects.equals(producerInn, that.producerInn) && Objects.equals(productionSerialNumber, that.productionSerialNumber) && Objects.equals(productionBatchNumber, that.productionBatchNumber) && Objects.equals(factorySerialNumber, that.factorySerialNumber) && Objects.equals(duration, that.duration);
+        return cis.equals(that.cis) && Objects.equals(found, that.found) && Objects.equals(valid, that.valid) && Objects.equals(printView, that.printView) && Objects.equals(gtin, that.gtin) && Objects.equals(isGreyGtin, that.isGreyGtin) && Objects.equals(groupIds, that.groupIds) && Objects.equals(verified, that.verified) && Objects.equals(realizable, that.realizable) && Objects.equals(utilised, that.utilised) && Objects.equals(expireDate, that.expireDate) && Objects.equals(variableExpirations, that.variableExpirations) && Objects.equals(productionDate, that.productionDate) && Objects.equals(productWeight, that.productWeight) && Objects.equals(prVetDocument, that.prVetDocument) && Objects.equals(isOwner, that.isOwner) && Objects.equals(isBlocked, that.isBlocked) && Objects.equals(ogvs, that.ogvs) && Objects.equals(message, that.message) && Objects.equals(errorCode, that.errorCode) && Objects.equals(isTracking, that.isTracking) && Objects.equals(sold, that.sold) && Objects.equals(eliminationState, that.eliminationState) && Objects.equals(mrp, that.mrp) && Objects.equals(smp, that.smp) && Objects.equals(grayZone, that.grayZone) && Objects.equals(innerUnitCount, that.innerUnitCount) && Objects.equals(soldUnitCount, that.soldUnitCount) && Objects.equals(packageType, that.packageType) && Objects.equals(packageQuantity, that.packageQuantity) && Objects.equals(parent, that.parent) && Objects.equals(producerInn, that.producerInn) && Objects.equals(productionSerialNumber, that.productionSerialNumber) && Objects.equals(productionBatchNumber, that.productionBatchNumber) && Objects.equals(factorySerialNumber, that.factorySerialNumber);
     }
 
     @Override
@@ -470,7 +454,7 @@ public final class MarkingCodeInfo implements Parcelable {
         result = 31 * result + Objects.hashCode(printView);
         result = 31 * result + Objects.hashCode(gtin);
         result = 31 * result + Objects.hashCode(isGreyGtin);
-        result = 31 * result + Objects.hashCode(groupId);
+        result = 31 * result + Objects.hashCode(groupIds);
         result = 31 * result + Objects.hashCode(verified);
         result = 31 * result + Objects.hashCode(realizable);
         result = 31 * result + Objects.hashCode(utilised);
@@ -499,8 +483,6 @@ public final class MarkingCodeInfo implements Parcelable {
         result = 31 * result + Objects.hashCode(productionSerialNumber);
         result = 31 * result + Objects.hashCode(productionBatchNumber);
         result = 31 * result + Objects.hashCode(factorySerialNumber);
-        result = 31 * result + Boolean.hashCode(isFromOnlineServer);
-        result = 31 * result + Objects.hashCode(duration);
         return result;
     }
 
@@ -514,7 +496,7 @@ public final class MarkingCodeInfo implements Parcelable {
                 ", printView='" + printView + '\'' +
                 ", gtin='" + gtin + '\'' +
                 ", isGreyGtin=" + isGreyGtin +
-                ", groupId=" + groupId +
+                ", groupIds=" + groupIds +
                 ", verified=" + verified +
                 ", realizable=" + realizable +
                 ", utilised=" + utilised +
@@ -543,279 +525,8 @@ public final class MarkingCodeInfo implements Parcelable {
                 ", productionSerialNumber='" + productionSerialNumber + '\'' +
                 ", productionBatchNumber='" + productionBatchNumber + '\'' +
                 ", factorySerialNumber='" + factorySerialNumber + '\'' +
-                ", isFromOnlineServer=" + isFromOnlineServer +
-                ", duration=" + duration +
                 '}';
     }
-
-    public static final class Builder {
-        private final String cis;
-        private Boolean found;
-        private Boolean valid;
-        private String printView;
-        private String gtin;
-        private Boolean isGreyGtin;
-        private List<String> groupId;
-        private Boolean verified;
-        private Boolean realizable;
-        private Boolean utilised;
-        private String expireDate;
-        private Map<String, String> variableExpirations;
-        private String productionDate;
-        private Long productWeight;
-        private String prVetDocument;
-        private Boolean isOwner;
-        private Boolean isBlocked;
-        private List<String> ogvs;
-        private String message;
-        private Integer errorCode;
-        private Boolean isTracking;
-        private Boolean sold;
-        private Integer eliminationState;
-        private Integer mrp;
-        private Integer smp;
-        private Boolean grayZone;
-        private Integer innerUnitCount;
-        private Integer soldUnitCount;
-        private String packageType;
-        private Integer packageQuantity;
-        private String parent;
-        private String producerInn;
-        private String productionSerialNumber;
-        private String productionBatchNumber;
-        private String factorySerialNumber;
-        private boolean isFromOnlineServer;
-        private Long duration;
-
-        public Builder(@NonNull String cis) {
-            Objects.requireNonNull(cis);
-            this.cis = cis;
-        }
-
-        public Builder setFound(Boolean found) {
-            Objects.requireNonNull(found);
-            this.found = found;
-            return this;
-        }
-
-        public Builder setValid(Boolean valid) {
-            this.valid = valid;
-            return this;
-        }
-
-        public Builder setPrintView(String printView) {
-            this.printView = printView;
-            return this;
-        }
-
-        public Builder setGtin(String gtin) {
-            this.gtin = gtin;
-            return this;
-        }
-
-        public Builder setGreyGtin(Boolean isGreyGtin) {
-            this.isGreyGtin = isGreyGtin;
-            return this;
-        }
-
-        public Builder setGroupId(List<String> groupId) {
-            this.groupId = groupId;
-            return this;
-        }
-
-        public Builder setVerified(Boolean verified) {
-            this.verified = verified;
-            return this;
-        }
-
-        public Builder setRealizable(Boolean realizable) {
-            this.realizable = realizable;
-            return this;
-        }
-
-        public Builder setUtilised(Boolean utilised) {
-            this.utilised = utilised;
-            return this;
-        }
-
-        public Builder setExpireDate(String expireDate) {
-            this.expireDate = expireDate;
-            return this;
-        }
-
-        public Builder setVariableExpirations(Map<String, String> variableExpirations) {
-            this.variableExpirations = variableExpirations;
-            return this;
-        }
-
-        public Builder setProductionDate(String productionDate) {
-            this.productionDate = productionDate;
-            return this;
-        }
-
-        public Builder setProductWeight(Long productWeight) {
-            this.productWeight = productWeight;
-            return this;
-        }
-
-        public Builder setPrVetDocument(String prVetDocument) {
-            this.prVetDocument = prVetDocument;
-            return this;
-        }
-
-        public Builder setOwner(Boolean isOwner) {
-            this.isOwner = isOwner;
-            return this;
-        }
-
-        public Builder setBlocked(Boolean isBlocked) {
-            this.isBlocked = isBlocked;
-            return this;
-        }
-
-        public Builder setOgvs(List<String> ogvs) {
-            this.ogvs = ogvs;
-            return this;
-        }
-
-        public Builder setMessage(String message) {
-            this.message = message;
-            return this;
-        }
-
-        public Builder setErrorCode(Integer errorCode) {
-            this.errorCode = errorCode;
-            return this;
-        }
-
-        public Builder setTracking(Boolean tracking) {
-            this.isTracking = tracking;
-            return this;
-        }
-
-        public Builder setSold(Boolean sold) {
-            this.sold = sold;
-            return this;
-        }
-
-        public Builder setEliminationState(Integer eliminationState) {
-            this.eliminationState = eliminationState;
-            return this;
-        }
-
-        public Builder setMrp(Integer mrp) {
-            this.mrp = mrp;
-            return this;
-        }
-
-        public Builder setSmp(Integer smp) {
-            this.smp = smp;
-            return this;
-        }
-
-        public Builder setGrayZone(Boolean grayZone) {
-            this.grayZone = grayZone;
-            return this;
-        }
-
-        public Builder setInnerUnitCount(Integer innerUnitCount) {
-            this.innerUnitCount = innerUnitCount;
-            return this;
-        }
-
-        public Builder setSoldUnitCount(Integer soldUnitCount) {
-            this.soldUnitCount = soldUnitCount;
-            return this;
-        }
-
-        public Builder setPackageType(String packageType) {
-            this.packageType = packageType;
-            return this;
-        }
-
-        public Builder setPackageQuantity(Integer packageQuantity) {
-            this.packageQuantity = packageQuantity;
-            return this;
-        }
-
-        public Builder setParent(String parent) {
-            this.parent = parent;
-            return this;
-        }
-
-        public Builder setProducerInn(String producerInn) {
-            this.producerInn = producerInn;
-            return this;
-        }
-
-        public Builder setProductionSerialNumber(String productionSerialNumber) {
-            this.productionSerialNumber = productionSerialNumber;
-            return this;
-        }
-
-        public Builder setProductionBatchNumber(String productionBatchNumber) {
-            this.productionBatchNumber = productionBatchNumber;
-            return this;
-        }
-
-        public Builder setFactorySerialNumber(String factorySerialNumber) {
-            this.factorySerialNumber = factorySerialNumber;
-            return this;
-        }
-
-        public Builder setFromOnline(boolean isFromOnline) {
-            this.isFromOnlineServer = isFromOnline;
-            return this;
-        }
-
-        public Builder setDuration(Long duration) {
-            this.duration = duration;
-            return this;
-        }
-
-        public MarkingCodeInfo build() {
-            return new MarkingCodeInfo(
-                    Objects.requireNonNull(cis),
-                    found,
-                    valid,
-                    printView,
-                    gtin,
-                    isGreyGtin,
-                    groupId,
-                    verified,
-                    realizable,
-                    utilised,
-                    expireDate,
-                    variableExpirations,
-                    productionDate,
-                    productWeight,
-                    prVetDocument,
-                    isOwner,
-                    isBlocked,
-                    ogvs,
-                    message,
-                    errorCode,
-                    isTracking,
-                    sold,
-                    eliminationState,
-                    mrp,
-                    smp,
-                    grayZone,
-                    innerUnitCount,
-                    soldUnitCount,
-                    packageType,
-                    packageQuantity,
-                    parent,
-                    producerInn,
-                    productionSerialNumber,
-                    productionBatchNumber,
-                    factorySerialNumber,
-                    isFromOnlineServer,
-                    duration
-            );
-        }
-    }
-
     private static class ParcelUtils {
         private static final ParcelUtils INSTANCE = new ParcelUtils();
 
@@ -883,9 +594,44 @@ public final class MarkingCodeInfo implements Parcelable {
             }
         }
 
+        private void writeNullableIntegerList(@NonNull Parcel dest, @Nullable List<Integer> list) {
+            if (list == null) {
+                dest.writeInt(-1);
+            } else {
+                dest.writeInt(list.size());
+                for (Integer value : list) {
+                    if (value == null) {
+                        dest.writeByte((byte) 0);
+                    } else {
+                        dest.writeByte((byte) 1);
+                        dest.writeInt(value);
+                    }
+                }
+            }
+        }
+
         @Nullable
         private List<String> readNullableStringList(@NonNull Parcel in) {
             return in.readByte() == 0 ? null : in.createStringArrayList();
+        }
+
+        @Nullable
+        private List<Integer> readNullableIntegerList(@NonNull Parcel in) {
+            int size = in.readInt();
+            if (size == -1) {
+                return null;
+            }
+
+            List<Integer> list = new ArrayList<>(size);
+            for (int i = 0; i < size; i++) {
+                byte isPresent = in.readByte();
+                if (isPresent == 0) {
+                    list.add(null);
+                } else {
+                    list.add(in.readInt());
+                }
+            }
+            return list;
         }
 
         private void writeNullableStringMap(@NonNull Parcel dest, @Nullable Map<String, String> map) {

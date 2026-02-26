@@ -5,57 +5,29 @@ import android.os.Parcelable;
 
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
-import java.util.List;
 import java.util.Objects;
 
 @Keep
 public final class CodesCheckRequest implements Parcelable {
-
     @NonNull
-    private final List<String> codes;
-
-    @Nullable
-    private final String inn;
-
-    @Nullable
-    private final String fnNumber;
-
+    private final CisList cisList;
     @NonNull
     private final ClientInfo clientInfo;
 
-    public CodesCheckRequest(@NonNull List<String> codes, @NonNull ClientInfo clientInfo) {
-        this.codes = codes;
-        this.inn = null;
-        this.fnNumber = null;
-        this.clientInfo = clientInfo;
-    }
-
-    public CodesCheckRequest(
-            @NonNull List<String> codes,
-            @Nullable String inn,
-            @Nullable String fnNumber,
-            @NonNull ClientInfo clientInfo
-    ) {
-        this.codes = codes;
-        this.inn = inn;
-        this.fnNumber = fnNumber;
+    public CodesCheckRequest(@NonNull CisList cisList, @NonNull ClientInfo clientInfo) {
+        this.cisList = cisList;
         this.clientInfo = clientInfo;
     }
 
     private CodesCheckRequest(Parcel in) {
-        codes = Objects.requireNonNull(in.createStringArrayList());
-        inn = in.readString();
-        fnNumber = in.readString();
+        cisList = Objects.requireNonNull(in.readParcelable(CisList.class.getClassLoader()));
         clientInfo = Objects.requireNonNull(in.readParcelable(ClientInfo.class.getClassLoader()));
     }
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeStringList(codes);
-        dest.writeString(inn);
-        dest.writeString(fnNumber);
+        dest.writeParcelable(cisList, flags);
         dest.writeParcelable(clientInfo, flags);
     }
 
@@ -64,7 +36,7 @@ public final class CodesCheckRequest implements Parcelable {
         return 0;
     }
 
-    public static final Creator<CodesCheckRequest> CREATOR = new Creator<CodesCheckRequest>() {
+    public static final Creator<CodesCheckRequest> CREATOR = new Creator<>() {
         @Override
         public CodesCheckRequest createFromParcel(Parcel in) {
             return new CodesCheckRequest(in);
@@ -77,18 +49,8 @@ public final class CodesCheckRequest implements Parcelable {
     };
 
     @NonNull
-    public List<String> getCodes() {
-        return codes;
-    }
-
-    @Nullable
-    public String getFnNumber() {
-        return fnNumber;
-    }
-
-    @Nullable
-    public String getInn() {
-        return inn;
+    public CisList getCisList() {
+        return cisList;
     }
 
     @NonNull
@@ -100,10 +62,7 @@ public final class CodesCheckRequest implements Parcelable {
     @Override
     public String toString() {
         return "CodesCheckRequest{" +
-                "codes=" + codes +
-                ", inn='" + inn + '\'' +
-                ", fnNumber='" + fnNumber + '\'' +
-                ", clientInfo=" + clientInfo +
+                "cisList=" + cisList +
                 ", clientInfo=" + clientInfo +
                 '}';
     }
