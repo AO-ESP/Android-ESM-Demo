@@ -10,6 +10,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import ru.esm.tspiot.data.EsmServiceClient
 import ru.esm.tspiot.domain.EsmResult
+import ru.esm.tspiot.domain.EsmResult.Error
+import ru.esm.tspiot.domain.EsmResult.Loading
+import ru.esm.tspiot.domain.EsmResult.ServiceUnavailable
+import ru.esm.tspiot.domain.EsmResult.Success
 import ru.esp.esm.api.model.lm.LmRegisterResponse
 import ru.esp.esm.api.model.lm.LmSoldCommodities
 import toPrettyString
@@ -19,7 +23,6 @@ import javax.inject.Inject
 class LmViewModel @Inject constructor(
     private val esmServiceClient: EsmServiceClient
 ) : ViewModel() {
-
     private val _cisSellResult = MutableStateFlow<EsmResult<String>?>(null)
     val cisSellResult: StateFlow<EsmResult<String>?> = _cisSellResult
 
@@ -33,18 +36,18 @@ class LmViewModel @Inject constructor(
         viewModelScope.launch {
             Log.d(TAG, "cisSell called")
 
-            _cisSellResult.value = null
+            _cisSellResult.value = Loading
             _cisReturnResult.value = null
             _cisSoldResult.value = null
 
             val esmResult = try {
                 esmServiceClient.cisSell(cisList)
             } catch (e: Exception) {
-                EsmResult.Error(777, e.message)
+                Error(777, e.message)
             }
             Log.d(TAG, "cisSell response $esmResult")
             when (esmResult) {
-                is EsmResult.Success -> {
+                is Success -> {
                     val bundle = esmResult.data
                     bundle.classLoader = LmRegisterResponse::class.java.classLoader
                     val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -58,16 +61,18 @@ class LmViewModel @Inject constructor(
                     }
 
                     _cisSellResult.value =
-                        EsmResult.Success("Успех: ${result?.toPrettyString()}")
+                        Success("Успех: ${result?.toPrettyString()}")
                 }
 
-                is EsmResult.Error -> {
-                    _cisSellResult.value = EsmResult.Error(esmResult.code, esmResult.message)
+                is Error -> {
+                    _cisSellResult.value = Error(esmResult.code, esmResult.message)
                 }
 
-                EsmResult.ServiceUnavailable -> {
-                    _cisSellResult.value = EsmResult.ServiceUnavailable
+                ServiceUnavailable -> {
+                    _cisSellResult.value = ServiceUnavailable
                 }
+
+                Loading -> {} // do nothing
             }
         }
     }
@@ -77,7 +82,7 @@ class LmViewModel @Inject constructor(
             Log.d(TAG, "cisReturn called")
 
             _cisSellResult.value = null
-            _cisReturnResult.value = null
+            _cisReturnResult.value = Loading
             _cisSoldResult.value = null
 
             val esmResult = try {
@@ -87,7 +92,7 @@ class LmViewModel @Inject constructor(
             }
             Log.d(TAG, "cisReturn response $esmResult")
             when (esmResult) {
-                is EsmResult.Success -> {
+                is Success -> {
                     val bundle = esmResult.data
                     bundle.classLoader = LmRegisterResponse::class.java.classLoader
                     val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -101,16 +106,18 @@ class LmViewModel @Inject constructor(
                     }
 
                     _cisReturnResult.value =
-                        EsmResult.Success("Успех: ${result?.toPrettyString()}")
+                        Success("Успех: ${result?.toPrettyString()}")
                 }
 
-                is EsmResult.Error -> {
-                    _cisReturnResult.value = EsmResult.Error(esmResult.code, esmResult.message)
+                is Error -> {
+                    _cisReturnResult.value = Error(esmResult.code, esmResult.message)
                 }
 
-                EsmResult.ServiceUnavailable -> {
-                    _cisReturnResult.value = EsmResult.ServiceUnavailable
+                ServiceUnavailable -> {
+                    _cisReturnResult.value = ServiceUnavailable
                 }
+
+                Loading -> {} // do nothing
             }
         }
     }
@@ -121,12 +128,12 @@ class LmViewModel @Inject constructor(
 
             _cisSellResult.value = null
             _cisReturnResult.value = null
-            _cisSoldResult.value = null
+            _cisSoldResult.value = Loading
             
             val esmResult = esmServiceClient.cisSold(skip, limit)
             Log.d(TAG, "cisSold response $esmResult")
             when (esmResult) {
-                is EsmResult.Success -> {
+                is Success -> {
                     val bundle = esmResult.data
                     bundle.classLoader = LmSoldCommodities::class.java.classLoader
                     val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -140,16 +147,18 @@ class LmViewModel @Inject constructor(
                     }
 
                     _cisSoldResult.value =
-                        EsmResult.Success("Успех: ${result?.toPrettyString()}")
+                        Success("Успех: ${result?.toPrettyString()}")
                 }
 
-                is EsmResult.Error -> {
-                    _cisSoldResult.value = EsmResult.Error(esmResult.code, esmResult.message)
+                is Error -> {
+                    _cisSoldResult.value = Error(esmResult.code, esmResult.message)
                 }
 
-                EsmResult.ServiceUnavailable -> {
-                    _cisSoldResult.value = EsmResult.ServiceUnavailable
+                ServiceUnavailable -> {
+                    _cisSoldResult.value = ServiceUnavailable
                 }
+
+                Loading -> {} // do nothing
             }
         }
     }

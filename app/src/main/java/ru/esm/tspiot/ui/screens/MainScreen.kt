@@ -62,7 +62,7 @@ fun MainScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Информация о сервисе
-            ServiceInfoCard()
+            ServiceInfoCard(viewModel.getServicePackage())
             ServiceConnectCard(viewModel)
 
             Button(

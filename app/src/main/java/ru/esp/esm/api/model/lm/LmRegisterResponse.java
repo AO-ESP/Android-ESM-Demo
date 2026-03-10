@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class LmRegisterResponse implements Parcelable {
     @Nullable
@@ -83,7 +84,7 @@ public class LmRegisterResponse implements Parcelable {
 
         LmRegisterResponse that = (LmRegisterResponse) o;
 
-        return results != null ? results.equals(that.results) : that.results == null;
+        return Objects.equals(results, that.results);
     }
 
     @Override
@@ -91,6 +92,7 @@ public class LmRegisterResponse implements Parcelable {
         return results != null ? results.hashCode() : 0;
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "LmRegisterResponse{" +
@@ -125,16 +127,6 @@ public class LmRegisterResponse implements Parcelable {
             } else {
                 success = null;
             }
-        }
-
-        @Nullable
-        public String getCis() {
-            return cis;
-        }
-
-        @Nullable
-        public Boolean getSuccess() {
-            return success;
         }
 
         @Override
@@ -172,6 +164,16 @@ public class LmRegisterResponse implements Parcelable {
             }
         };
 
+        @Nullable
+        public String getCis() {
+            return cis;
+        }
+
+        @Nullable
+        public Boolean getSuccess() {
+            return success;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -179,8 +181,8 @@ public class LmRegisterResponse implements Parcelable {
 
             Result result = (Result) o;
 
-            if (cis != null ? !cis.equals(result.cis) : result.cis != null) return false;
-            return success != null ? success.equals(result.success) : result.success == null;
+            if (!Objects.equals(cis, result.cis)) return false;
+            return Objects.equals(success, result.success);
         }
 
         @Override

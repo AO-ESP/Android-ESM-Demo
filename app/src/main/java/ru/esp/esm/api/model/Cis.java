@@ -22,25 +22,21 @@ public class Cis implements Parcelable {
         this.pg = pg;
     }
 
+    public Cis(@NonNull String cis) {
+        this.cis = cis;
+        this.pg = null;
+    }
+
     protected Cis(@NonNull Parcel in) {
         this.cis = Objects.requireNonNull(in.readString());
-        this.pg = in.readInt() == 1 ? in.readInt() : null;
+        this.pg = in.readByte() == 0 ? null : in.readInt();
     }
 
-    @NonNull
-    public String getCis() {
-        return cis;
-    }
-
-    @Nullable
-    public Integer getPg() {
-        return pg;
-    }
 
     @Override
     public void writeToParcel(@NonNull Parcel dest, int flags) {
         dest.writeString(cis);
-        dest.writeInt(pg != null ? 1 : 0);
+        dest.writeByte((byte) (pg == null ? 0 : 1));
         if (pg != null) {
             dest.writeInt(pg);
         }
@@ -62,4 +58,23 @@ public class Cis implements Parcelable {
             return new Cis[size];
         }
     };
+
+    @NonNull
+    public String getCis() {
+        return cis;
+    }
+
+    @Nullable
+    public Integer getPg() {
+        return pg;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return "Cis{" +
+                "cis='" + cis + '\'' +
+                ", pg=" + pg +
+                '}';
+    }
 }

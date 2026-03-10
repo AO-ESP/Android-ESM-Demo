@@ -23,26 +23,20 @@ public class CisList implements Parcelable {
         this.tz = tz;
     }
 
+    public CisList(@NonNull List<Cis> codesList) {
+        this.codesList = codesList;
+        this.tz = null;
+    }
+
     protected CisList(@NonNull Parcel in) {
         this.codesList = Objects.requireNonNull(in.createTypedArrayList(Cis.CREATOR));
-        this.tz = in.readInt() == 1 ? in.readInt() : null;
-    }
-
-    @NonNull
-    public List<Cis> getCodesList() {
-        return codesList;
-    }
-
-    @Nullable
-    public Integer getTz() {
-        return tz;
+        this.tz = in.readByte() == 0 ? null : in.readInt();
     }
 
     @Override
     public void writeToParcel(@NonNull Parcel dest, int flags) {
         dest.writeTypedList(codesList);
-        // 1 = не null, 0 = null
-        dest.writeInt(tz != null ? 1 : 0);
+        dest.writeByte((byte) (tz == null ? 0 : 1));
         if (tz != null) {
             dest.writeInt(tz);
         }
@@ -64,4 +58,23 @@ public class CisList implements Parcelable {
             return new CisList[size];
         }
     };
+
+    @NonNull
+    public List<Cis> getCodesList() {
+        return codesList;
+    }
+
+    @Nullable
+    public Integer getTz() {
+        return tz;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return "CisList{" +
+                "codesList=" + codesList +
+                ", tz=" + tz +
+                '}';
+    }
 }

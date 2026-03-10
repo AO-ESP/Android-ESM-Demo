@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import ru.esm.tspiot.data.EsmServiceClient
 import ru.esm.tspiot.domain.EsmResult
+import ru.esm.tspiot.domain.EsmResult.Error
+import ru.esm.tspiot.domain.EsmResult.Success
 import ru.esp.esm.api.model.Cis
 import ru.esp.esm.api.model.CisList
 import ru.esp.esm.api.model.ClientInfo
@@ -22,11 +24,8 @@ import javax.inject.Inject
 class CodesCheckViewModel @Inject constructor(
     private val esmServiceClient: EsmServiceClient
 ) : ViewModel() {
-    private val _resultV1 = MutableStateFlow<EsmResult<String>?>(null)
-    val resultV1: StateFlow<EsmResult<String>?> = _resultV1
-
-    private val _resultV2 = MutableStateFlow<EsmResult<String>?>(null)
-    val resultV2: StateFlow<EsmResult<String>?> = _resultV2
+    private val _checkResult = MutableStateFlow<EsmResult<String>?>(null)
+    val checkResult: StateFlow<EsmResult<String>?> = _checkResult
 
     val clientInfo = ClientInfo(
         "ESM Test",
@@ -36,10 +35,20 @@ class CodesCheckViewModel @Inject constructor(
         null
     )
 
-    fun codesCheck(codes: List<Cis>) {
+    init {
+        Log.d("CodesCheckViewModel", "init")
+    }
+
+    override fun onCleared() {
+        Log.d("CodesCheckViewModel", "onCleared")
+        super.onCleared()
+    }
+
+    fun codesCheck(codes: List<Cis>, tz: Int? = null) {
         viewModelScope.launch {
             Log.d(TAG, "codesCheck called")
-            val cisList = CisList(codes, 2)
+            _checkResult.value = EsmResult.Loading
+            val cisList = CisList(codes, tz)
 
             val esmResult = esmServiceClient.codesCheck(
                 CodesCheckRequest(
@@ -61,56 +70,31 @@ class CodesCheckViewModel @Inject constructor(
                         @Suppress("DEPRECATION")
                         bundle.getParcelable("key")
                     }
-                    _resultV2.value = null
-                    _resultV1.value = EsmResult.Success("Успех: ${result?.toPrettyString()}")
+                    _checkResult.value = Success("Успех: ${result?.toPrettyString()}")
                 }
 
                 is EsmResult.Error -> {
-                    _resultV1.value = EsmResult.Error(esmResult.code, esmResult.message)
+                    _checkResult.value = Error(esmResult.code, esmResult.message)
                 }
 
                 EsmResult.ServiceUnavailable -> {
-                    _resultV1.value = EsmResult.ServiceUnavailable
+                    _checkResult.value = EsmResult.ServiceUnavailable
                 }
+
+                EsmResult.Loading -> {} // do nothing
             }
+        }
+    }
+
+    fun clearCheckResult() {
+        viewModelScope.launch {
+            _checkResult.value = null
         }
     }
 
     fun requestCheck(codes: List<String>) {
         viewModelScope.launch {
             Log.d(TAG, "requestCheck called")
-//            val esmResult = esmServiceClient.codesCheck(
-//                CodesCheckRequest(
-//                    codes,
-//                    clientInfo
-//                )
-//            )
-//            Log.d(TAG, "requestCheck response $esmResult")
-//            when (esmResult) {
-//                is EsmResult.Success -> {
-//                    val bundle = esmResult.data
-//                    bundle.classLoader = CodesCheckResponse::class.java.classLoader
-//                    val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-//                        bundle.getParcelable(
-//                            "key",
-//                            CodesCheckResponse::class.java
-//                        )
-//                    } else {
-//                        @Suppress("DEPRECATION")
-//                        bundle.getParcelable("key")
-//                    }
-//                    _resultV2.value = null
-//                    _resultV1.value = EsmResult.Success("Успех: ${result?.toPrettyString()}")
-//                }
-//
-//                is EsmResult.Error -> {
-//                    _resultV1.value = EsmResult.Error(esmResult.code, esmResult.message)
-//                }
-//
-//                EsmResult.ServiceUnavailable -> {
-//                    _resultV1.value = EsmResult.ServiceUnavailable
-//                }
-//            }
         }
     }
 

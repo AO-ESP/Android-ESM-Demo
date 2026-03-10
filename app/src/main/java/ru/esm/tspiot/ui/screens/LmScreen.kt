@@ -13,15 +13,14 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -32,29 +31,43 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import ru.atol.os.tspiot.presentation.ui.navigation.AppRoute
+import ru.esm.tspiot.domain.ScanResult
 import ru.esm.tspiot.ui.items.MethodSection
-import ru.esm.tspiot.ui.scanner.ScannerViewModel
+import ru.esm.tspiot.ui.items.NumberInputField
+import ru.esm.tspiot.ui.items.ScannedMarks
 import ru.esm.tspiot.ui.viewmodels.LmViewModel
-
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun LmScreen(
     navController: NavHostController,
-    scanner: ScannerViewModel = hiltViewModel(),
     viewModel: LmViewModel = hiltViewModel()
+
 ) {
-    var showScanner by remember { mutableStateOf(false) }
+    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+    var scanResult by rememberSaveable { mutableStateOf<Set<ScanResult>?>(null) }
+
+    var showScanner by rememberSaveable { mutableStateOf(false) }
+
     val cameraPermissionState = rememberPermissionState(
         permission = Manifest.permission.CAMERA
     )
-    val scanResult = scanner.scanResult.collectAsState().value
 
     LaunchedEffect(showScanner) {
         if (showScanner && !cameraPermissionState.status.isGranted) {
             cameraPermissionState.launchPermissionRequest()
         }
     }
+
+    // Наблюдение за изменениями в savedStateHandle
+    LaunchedEffect(savedStateHandle) {
+        savedStateHandle?.getStateFlow<Set<ScanResult>?>("scanResult", null)?.collect { result ->
+            scanResult = result
+        }
+    }
+
+    var skip by rememberSaveable { mutableIntStateOf(0) }
+    var limit by rememberSaveable { mutableIntStateOf(100) }
 
     val cisSellResult by viewModel.cisSellResult.collectAsStateWithLifecycle()
     val cisReturnResult by viewModel.cisReturnResult.collectAsStateWithLifecycle()
@@ -84,13 +97,13 @@ fun LmScreen(
                         showScanner = true
                         if (cameraPermissionState.status.isGranted) {
                             navController.navigate(AppRoute.ScannerScreenRoute.id) {
-                                popUpTo(AppRoute.CodesCheckScreenRoute.id) {
+                                popUpTo(AppRoute.LmScreenRoute.id) {
                                     inclusive = false
                                 }
                             }
                         } else {
                             navController.navigate(AppRoute.PermissionScreenRoute.id) {
-                                popUpTo(AppRoute.CodesCheckScreenRoute.id) {
+                                popUpTo(AppRoute.LmScreenRoute.id) {
                                     inclusive = false
                                 }
                             }
@@ -104,21 +117,9 @@ fun LmScreen(
                 }
             }
             item {
-                Card(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth()
-                ) {
-                    Text(text = "Марка", style = MaterialTheme.typography.titleMedium)
-                    scanResult?.text?.let {
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                    }
-                }
+                ScannedMarks(scanResult)
             }
-            scanResult?.text?.let {
+            scanResult?.let { results ->
                 item {
                     Card(
                         modifier = Modifier
@@ -127,13 +128,13 @@ fun LmScreen(
                     ) {
                         MethodSection(
                             title = "CIS Sell",
-                            onClick = { viewModel.cisSell(listOf(it)) },
+                            onClick = { viewModel.cisSell(results.map { it.text }) },
                             result = cisSellResult
                         )
                     }
                 }
             }
-            scanResult?.text?.let {
+            scanResult?.let { results ->
                 item {
                     Card(
                         modifier = Modifier
@@ -142,21 +143,32 @@ fun LmScreen(
                     ) {
                         MethodSection(
                             title = "CIS Return",
-                            onClick = { viewModel.cisReturn(listOf(it)) },
+                            onClick = { viewModel.cisReturn(results.map { it.text }) },
                             result = cisReturnResult
                         )
                     }
                 }
             }
+
             item {
                 Card(
                     modifier = Modifier
                         .padding(16.dp)
                         .fillMaxWidth()
                 ) {
+                    NumberInputField(
+                        value = skip,
+                        onValueChange = { value -> value?.let { skip = it } },
+                        label = "skip"
+                    )
+                    NumberInputField(
+                        value = limit,
+                        onValueChange = { value -> value?.let { limit = it } },
+                        label = "limit"
+                    )
                     MethodSection(
                         title = "CIS Sold (skip=0, limit=10)",
-                        onClick = { viewModel.cisSold(0, 10) },
+                        onClick = { viewModel.cisSold(skip, limit) },
                         result = cisSoldResult
                     )
                 }

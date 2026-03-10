@@ -12,15 +12,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import ru.esm.tspiot.domain.ScanResult
 
@@ -38,8 +38,8 @@ fun ScannerScreen(
     navController: NavHostController,
     viewModel: ScannerViewModel = hiltViewModel()
 ) {
-    val scanResult: ScanResult? = viewModel.scanResult.collectAsState(null).value
-    val isScanning: Boolean? = viewModel.isScanning.collectAsState(null).value
+    val scanResult by viewModel.scanResult.collectAsStateWithLifecycle()
+    val isScanning by viewModel.isScanning.collectAsStateWithLifecycle()
 
     Box(modifier = Modifier.fillMaxSize()) {
         CameraPreview(
@@ -87,7 +87,7 @@ fun ScannerScreen(
                 Text("Назад")
             }
 
-            if (isScanning == true) {
+            if (isScanning) {
                 CircularProgressIndicator(
                     color = Color.White,
                     strokeWidth = 2.dp
@@ -95,79 +95,96 @@ fun ScannerScreen(
             }
         }
 
-        scanResult?.let { result ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.7f))
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(0.9f)
+
+        if (!isScanning) {
+            scanResult?.let { marks ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.7f))
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Card(
+                        modifier = Modifier.fillMaxWidth(0.9f)
                     ) {
-                        Text(
-                            text = "Scan Successful!",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = "Формат:",
-                            fontSize = 14.sp,
-                            color = Color.Gray
-                        )
-                        Text(
-                            text = result.format,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = "Данные:",
-                            fontSize = 14.sp,
-                            color = Color.Gray
-                        )
-                        Text(
-                            text = result.text,
-                            fontSize = 16.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .padding(8.dp)
-                                .verticalScroll(rememberScrollState())
-                                .height(100.dp)
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        LazyColumn(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Button(
-                                onClick = { viewModel.clearResult() }
-                            ) {
-                                Text("Сканировать")
+                            item {
+                                Text(
+                                    text = "Отсканировано:",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+                            marks.forEachIndexed { index, item ->
+                                item {
+                                    Text(
+                                        text = "${index + 1}. ${item.text}",
+                                        fontSize = 16.sp,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier
+                                            .padding(4.dp)
+                                    )
+                                }
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(16.dp))
                             }
 
-                            Button(
-                                onClick = { navController.popBackStack() },
-                            ) {
-                                Text("Готово")
+                            item {
+                                Row(
+                                    Modifier
+                                        .padding(16.dp)
+                                        .fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                ) {
+                                    Button(
+                                        modifier = Modifier
+                                            .padding(end = 2.dp)
+                                            .weight(1f),
+                                        onClick = { viewModel.scan() }
+                                    ) {
+                                        Text("Добавить")
+                                    }
+
+                                    Button(
+                                        modifier = Modifier
+                                            .padding(start = 2.dp)
+                                            .weight(1f),
+                                        onClick = {
+                                            navController.previousBackStackEntry?.savedStateHandle?.set(
+                                                "scanResult",
+                                                scanResult
+                                            )
+                                            navController.popBackStack()
+                                        },
+                                    ) {
+                                        Text("Готово")
+                                    }
+                                }
+                            }
+                            item {
+                                Button(
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp)
+                                        .fillMaxWidth(),
+                                    onClick = { viewModel.clearResult() }
+                                ) {
+                                    Text("Очистить")
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
 
         // Error overlay
         viewModel.errorMessage.value?.let { error ->
@@ -211,4 +228,3 @@ fun ScannerScreen(
             }
         }
     }
-}

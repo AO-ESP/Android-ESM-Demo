@@ -35,7 +35,7 @@ class EsmServiceClient @Inject constructor(private val context: Context) {
             synchronized(lock) {
                 esmService = IEsmService.Stub.asInterface(service)
                 _isConnected.value = true
-                Log.d(TAG, "EsmService Connected V")
+                Log.d(TAG, "EsmService Connected ✓")
             }
         }
 
@@ -43,7 +43,7 @@ class EsmServiceClient @Inject constructor(private val context: Context) {
             synchronized(lock) {
                 esmService = null
                 _isConnected.value = false
-                Log.d(TAG, "EsmService Disconnected X")
+                Log.d(TAG, "EsmService Disconnected ✗")
             }
         }
     }

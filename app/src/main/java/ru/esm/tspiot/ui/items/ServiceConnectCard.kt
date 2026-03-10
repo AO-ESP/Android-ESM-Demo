@@ -48,7 +48,7 @@ fun ServiceConnectCard(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = if (isConnected) "Подключено" else "Не подключено",
+                text = if (isConnected) "✓ Подключено" else "✗ Не подключено",
                 style = MaterialTheme.typography.bodyLarge
             )
         }

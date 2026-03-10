@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
@@ -29,7 +30,7 @@ import com.google.accompanist.permissions.shouldShowRationale
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun PermissionScreen(
-    onBack: () -> Unit
+    navController: NavHostController
 ) {
     val permissionState = rememberPermissionState(
         permission = Manifest.permission.CAMERA
@@ -86,7 +87,7 @@ fun PermissionScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = onBack,
+            onClick = { navController.popBackStack() },
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.secondaryContainer
             )

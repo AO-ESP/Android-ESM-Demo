@@ -41,12 +41,25 @@ public final class ClientInfo implements Parcelable {
         this.lastkey = lastkey;
     }
 
+    public ClientInfo(
+            @NonNull String name,
+            @NonNull String version,
+            @NonNull String id,
+            @NonNull String token
+    ) {
+        this.name = name;
+        this.version = version;
+        this.id = id;
+        this.token = token;
+        this.lastkey = null;
+    }
+
     private ClientInfo(Parcel in) {
         name = Objects.requireNonNull(in.readString());
         version = Objects.requireNonNull(in.readString());
         id = Objects.requireNonNull(in.readString());
         token = Objects.requireNonNull(in.readString());
-        lastkey = in.readString();
+        lastkey = in.readByte() == 0 ? null : in.readString();
     }
 
     @Override
@@ -55,7 +68,10 @@ public final class ClientInfo implements Parcelable {
         dest.writeString(version);
         dest.writeString(id);
         dest.writeString(token);
-        dest.writeString(lastkey);
+        dest.writeByte((byte) (lastkey == null ? 0 : 1));
+        if (lastkey != null) {
+            dest.writeString(lastkey);
+        }
     }
 
     @Override

@@ -1,5 +1,6 @@
 package ru.esm.tspiot.ui.scanner
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,21 +13,32 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ScannerViewModel @Inject constructor() : ViewModel() {
-    private val _scanResult = MutableStateFlow<ScanResult?>(value = DEFAULT_SCAN_RESULT)
+    private val _scanResult = MutableStateFlow<Set<ScanResult>?>(value = null)
     val scanResult = _scanResult.asStateFlow()
     private val _isScanning = MutableStateFlow(false)
     val isScanning = _isScanning.asStateFlow()
     val errorMessage = mutableStateOf<String?>(null)
 
-    fun stopScanning() {
+    init {
+        Log.d("ScannerViewModel", "init")
+    }
+
+    override fun onCleared() {
+        Log.d("ScannerViewModel", "onCleared")
+        super.onCleared()
+    }
+
+    private fun stopScanning() {
         _isScanning.value = false
     }
 
     fun onScanResult(result: ScanResult) {
         viewModelScope.launch {
+            val scanResult = scanResult.value ?: mutableSetOf()
             val charToRemove = "\u001D"
             val trimmedMark = result.text.removePrefix(charToRemove)
-            _scanResult.emit(result.copy(text = trimmedMark))
+            _scanResult.value = scanResult.plus(result.copy(text = trimmedMark))
+            Log.d("ScannerViewModel", trimmedMark)
             stopScanning()
         }
     }
@@ -36,18 +48,16 @@ class ScannerViewModel @Inject constructor() : ViewModel() {
         stopScanning()
     }
 
-    fun clearResult() {
+    fun scan() {
         viewModelScope.launch {
-            _scanResult.emit(null)
-            errorMessage.value = null
+            _isScanning.value = true
         }
     }
-
-    companion object {
-        val DEFAULT_SCAN_RESULT = ScanResult(
-            text = "0104670540176099215'W9Um\u001d93dGVz",
-            format = "DATA MATRIX",
-            timestamp = System.currentTimeMillis()
-        )
+    fun clearResult() {
+        viewModelScope.launch {
+            _scanResult.value = null
+            errorMessage.value = null
+            _isScanning.value = true
+        }
     }
 }

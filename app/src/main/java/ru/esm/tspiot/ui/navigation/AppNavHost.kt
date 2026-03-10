@@ -41,8 +41,7 @@ private fun NavGraphBuilder.initNavigation(navController: NavHostController) {
         ScannerScreen(navController)
     }
     composable(AppRoute.PermissionScreenRoute.id) {
-        PermissionScreen {}
-
+        PermissionScreen(navController)
     }
 }
 

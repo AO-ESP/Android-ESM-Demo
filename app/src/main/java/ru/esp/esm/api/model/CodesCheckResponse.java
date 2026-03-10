@@ -54,6 +54,24 @@ public final class CodesCheckResponse implements Parcelable {
         this.version = version;
     }
 
+    public CodesCheckResponse(
+            int code,
+            @NonNull String description,
+            @NonNull List<MarkingCodeInfo> codes,
+            @NonNull String reqId,
+            long reqTimestamp,
+            boolean isCheckedOffline
+    ) {
+        this.code = code;
+        this.description = description;
+        this.codes = codes;
+        this.reqId = reqId;
+        this.reqTimestamp = reqTimestamp;
+        this.isCheckedOffline = isCheckedOffline;
+        this.inst = null;
+        this.version = null;
+    }
+
     CodesCheckResponse(Parcel in) {
         code = in.readInt();
         description = Objects.requireNonNull(in.readString());
@@ -61,8 +79,8 @@ public final class CodesCheckResponse implements Parcelable {
         reqId = Objects.requireNonNull(in.readString());
         reqTimestamp = in.readLong();
         isCheckedOffline = in.readByte() != 0;
-        inst = in.readString();
-        version = in.readString();
+        inst = in.readByte() == 0 ? null : in.readString();
+        version = in.readByte() == 0 ? null : in.readString();
     }
 
     @Override
@@ -73,8 +91,14 @@ public final class CodesCheckResponse implements Parcelable {
         dest.writeString(reqId);
         dest.writeLong(reqTimestamp);
         dest.writeByte((byte) (isCheckedOffline ? 1 : 0));
-        dest.writeString(inst);
-        dest.writeString(version);
+        dest.writeByte((byte) (inst == null ? 0 : 1));
+        if (inst != null) {
+            dest.writeString(inst);
+        }
+        dest.writeByte((byte) (version == null ? 0 : 1));
+        if (version != null) {
+            dest.writeString(version);
+        }
     }
 
     @Override

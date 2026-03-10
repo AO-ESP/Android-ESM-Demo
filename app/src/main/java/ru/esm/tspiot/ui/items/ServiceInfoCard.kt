@@ -14,7 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ServiceInfoCard() {
+fun ServiceInfoCard(servicePackage: String) {
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -27,9 +27,9 @@ fun ServiceInfoCard() {
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Service: MarkingService")
-            Text("Action: ru.esm.tspiot.action.ACTION_MARKING_MANAGER")
-            Text("Package: ru.esp.tspiot")
+            Text("Service: IEsmService")
+            Text("Action: ru.esp.esm.action.ACTION_ESM_SERVICE")
+            Text("Package: $servicePackage")
         }
     }
 }
