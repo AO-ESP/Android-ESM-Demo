@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "ru.esp.esmdemo"
+    namespace = "ru.esp.pmsr.v1"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "ru.esp.esmdemo"
+        applicationId = "ru.esp.pmsr.v1"
         minSdk = 23
         targetSdk = 36
         versionCode = 1
