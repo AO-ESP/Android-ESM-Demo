@@ -38,7 +38,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun getServicePackage(): String {
-        return when (ru.esp.esmdemo.BuildConfig.FLAVOR) {
+        return when (ru.esp.pmsr.v2.BuildConfig.FLAVOR) {
             "atol" -> ATOL_PACKAGE
             else -> OTHER_PACKAGE
         }
