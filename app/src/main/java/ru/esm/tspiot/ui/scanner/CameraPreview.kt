@@ -8,19 +8,34 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
+import androidx.compose.ui.tooling.preview.Preview as ComposePreview
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.Executors
+
+@ComposePreview
+@Composable
+fun CameraPreviewAtOnce() {
+    CameraPreview(
+        {_, _ -> },
+        {}
+    )
+}
 
 @SuppressLint("UnsafeOptInUsageError", "RestrictedApi")
 @Composable
@@ -32,88 +47,98 @@ fun CameraPreview(
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        AndroidView(
-            factory = { ctx ->
-                val previewView = PreviewView(ctx)
-                val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+        if (!LocalInspectionMode.current) {
+            AndroidView(
+                factory = { ctx ->
+                    val previewView = PreviewView(ctx)
+                    val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
 
-                cameraProviderFuture.addListener({
-                    val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+                    cameraProviderFuture.addListener({
+                        val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
-                    val preview = Preview.Builder()
-                        .build()
-                        .also {
-                            it.setSurfaceProvider(previewView.surfaceProvider)
-                        }
+                        val preview = Preview.Builder()
+                            .build()
+                            .also {
+                                it.setSurfaceProvider(previewView.surfaceProvider)
+                            }
 
-                    val imageAnalysis = ImageAnalysis.Builder()
-                        .setTargetResolution(Size(1280, 720))
-                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                        .build()
+                        val imageAnalysis = ImageAnalysis.Builder()
+                            .setTargetResolution(Size(1280, 720))
+                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                            .build()
 
-                    val options = BarcodeScannerOptions.Builder()
-                        .setBarcodeFormats(
-                            Barcode.FORMAT_DATA_MATRIX,
-                            Barcode.FORMAT_EAN_13,
-                            Barcode.FORMAT_EAN_8
-                        )
-                        .build()
-
-                    val scanner = BarcodeScanning.getClient(options)
-
-                    imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
-                        val mediaImage = imageProxy.image
-                        if (mediaImage != null) {
-                            val image = InputImage.fromMediaImage(
-                                mediaImage,
-                                imageProxy.imageInfo.rotationDegrees
+                        val options = BarcodeScannerOptions.Builder()
+                            .setBarcodeFormats(
+                                Barcode.FORMAT_DATA_MATRIX,
+                                Barcode.FORMAT_EAN_13,
+                                Barcode.FORMAT_EAN_8
                             )
+                            .build()
 
-                            scanner.process(image)
-                                .addOnSuccessListener { barcodes ->
-                                    for (barcode in barcodes) {
-                                        barcode.rawValue?.let { rawValue ->
-                                            val format = when (barcode.format) {
-                                                Barcode.FORMAT_DATA_MATRIX -> "DATA MATRIX"
-                                                Barcode.FORMAT_EAN_13 -> "EAN-13"
-                                                Barcode.FORMAT_EAN_8 -> "EAN-8"
-                                                else -> "Unknown"
+                        val scanner = BarcodeScanning.getClient(options)
+
+                        imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
+                            val mediaImage = imageProxy.image
+                            if (mediaImage != null) {
+                                val image = InputImage.fromMediaImage(
+                                    mediaImage,
+                                    imageProxy.imageInfo.rotationDegrees
+                                )
+
+                                scanner.process(image)
+                                    .addOnSuccessListener { barcodes ->
+                                        for (barcode in barcodes) {
+                                            barcode.rawValue?.let { rawValue ->
+                                                val format = when (barcode.format) {
+                                                    Barcode.FORMAT_DATA_MATRIX -> "DATA MATRIX"
+                                                    Barcode.FORMAT_EAN_13 -> "EAN-13"
+                                                    Barcode.FORMAT_EAN_8 -> "EAN-8"
+                                                    else -> "Unknown"
+                                                }
+                                                onBarcodeScanned(rawValue, format)
                                             }
-                                            onBarcodeScanned(rawValue, format)
                                         }
                                     }
-                                }
-                                .addOnFailureListener { exception ->
-                                    onError("Не удалось отсканировать: ${exception.message}")
-                                }
-                                .addOnCompleteListener {
-                                    imageProxy.close()
-                                }
-                        } else {
-                            imageProxy.close()
+                                    .addOnFailureListener { exception ->
+                                        onError("Не удалось отсканировать: ${exception.message}")
+                                    }
+                                    .addOnCompleteListener {
+                                        imageProxy.close()
+                                    }
+                            } else {
+                                imageProxy.close()
+                            }
                         }
-                    }
 
-                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
-                    try {
-                        cameraProvider.unbindAll()
-                        cameraProvider.bindToLifecycle(
-                            lifecycleOwner,
-                            cameraSelector,
-                            preview,
-                            imageAnalysis
-                        )
-                    } catch (exc: Exception) {
-                        Log.e("CameraPreview", "Use case binding failed", exc)
-                        onError("Не удалось получить доступ к камере: ${exc.message}")
-                    }
-                }, ContextCompat.getMainExecutor(ctx))
+                        try {
+                            cameraProvider.unbindAll()
+                            cameraProvider.bindToLifecycle(
+                                lifecycleOwner,
+                                cameraSelector,
+                                preview,
+                                imageAnalysis
+                            )
+                        } catch (exc: Exception) {
+                            Log.e("CameraPreview", "Use case binding failed", exc)
+                            onError("Не удалось получить доступ к камере: ${exc.message}")
+                        }
+                    }, ContextCompat.getMainExecutor(ctx))
 
-                previewView
-            },
-            modifier = Modifier.fillMaxSize(),
-            update = { }
-        )
+                    previewView
+                },
+                modifier = Modifier.fillMaxSize(),
+                update = { }
+            )
+        } else {
+            // Заглушка для превью
+            Box(
+                modifier = Modifier.fillMaxSize().background(Color.Black),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Camera Preview", color = Color.White)
+            }
+        }
     }
 }

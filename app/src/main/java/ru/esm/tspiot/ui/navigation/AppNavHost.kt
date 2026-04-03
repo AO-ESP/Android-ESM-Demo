@@ -1,6 +1,8 @@
 package ru.esm.tspiot.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavBackStackEntry
@@ -9,13 +11,17 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import ru.atol.os.tspiot.presentation.ui.navigation.AppRoute
-import ru.atol.os.tspiot.presentation.ui.navigation.Route
 import ru.esm.tspiot.ui.scanner.ScannerScreen
 import ru.esm.tspiot.ui.screens.CodesCheckScreen
 import ru.esm.tspiot.ui.screens.LmScreen
 import ru.esm.tspiot.ui.screens.MainScreen
 import ru.esm.tspiot.ui.screens.PermissionScreen
+
+val LocalNavController = compositionLocalOf<NavHostController> {
+    error("No NavController provided")
+}
+
+// Тут просмотра не будет из-за разных ViewModel в реализациях
 
 @Composable
 fun AppNavHost(
@@ -23,26 +29,20 @@ fun AppNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
 ) {
-    NavHost(navController, startDestination.id, modifier) {
-        initNavigation(navController)
+    CompositionLocalProvider(LocalNavController provides navController) {
+        NavHost(navController, startDestination.id, modifier) {
+            initNavigation()
+        }
     }
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
-private fun NavGraphBuilder.initNavigation(navController: NavHostController) {
-    composable(AppRoute.id) { MainScreen(navController) }
-    composable(AppRoute.CodesCheckScreenRoute.id) {
-        CodesCheckScreen(navController)
-    }
-    composable(AppRoute.LmScreenRoute.id) {
-        LmScreen(navController)
-    }
-    composable(AppRoute.ScannerScreenRoute.id) {
-        ScannerScreen(navController)
-    }
-    composable(AppRoute.PermissionScreenRoute.id) {
-        PermissionScreen(navController)
-    }
+private fun NavGraphBuilder.initNavigation() {
+    composable(AppRoute.id) { MainScreen() }
+    composable(AppRoute.CodesCheckScreenRoute.id) { CodesCheckScreen() }
+    composable(AppRoute.LmScreenRoute.id) { LmScreen() }
+    composable(AppRoute.ScannerScreenRoute.id) { ScannerScreen() }
+    composable(AppRoute.PermissionScreenRoute.id) { PermissionScreen() }
 }
 
 private fun NavGraphBuilder.composable(

@@ -1,11 +1,9 @@
-package ru.atol.os.tspiot.presentation.ui.navigation
+package ru.esm.tspiot.ui.navigation
 
 sealed class Route {
     abstract val id: String
     open val idWithArg: String get() = id
     abstract val title: String
-
-
 }
 
 data object AppRoute : Route() {

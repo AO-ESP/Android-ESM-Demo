@@ -21,24 +21,58 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import ru.atol.os.tspiot.presentation.ui.navigation.AppRoute
+import ru.esm.tspiot.ui.navigation.AppRoute
 import ru.esm.tspiot.ui.items.ServiceConnectCard
 import ru.esm.tspiot.ui.items.ServiceInfoCard
+import ru.esm.tspiot.ui.navigation.LocalNavController
+import ru.esm.tspiot.ui.navigation.createPreviewNavController
 import ru.esm.tspiot.ui.viewmodels.MainViewModel
+
+@Preview
+@Composable
+fun MainScreenPreview() {
+    MainScreenContent(
+        navController = createPreviewNavController(),
+        isConnected = true,
+        {},
+        {},
+        "ServicePackage"
+    )
+}
+
+@Composable
+fun MainScreen(
+    navController: NavHostController = LocalNavController.current,
+    viewModel: MainViewModel = hiltViewModel(),
+) {
+    val isConnected by viewModel.isConnected.collectAsStateWithLifecycle()
+    val servicePackage = viewModel.getServicePackage()
+
+    MainScreenContent(
+        navController,
+        isConnected,
+        onConnect = { viewModel.connect() },
+        onDisconnect = { viewModel.disconnect() },
+        servicePackage
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
-fun MainScreen(
+fun MainScreenContent(
     navController: NavHostController,
-    viewModel: MainViewModel = hiltViewModel(),
+    isConnected: Boolean,
+    onConnect: () -> Unit,
+    onDisconnect: () -> Unit,
+    servicePackage: String
 ) {
     val context = LocalContext.current
-    val isConnected by viewModel.isConnected.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -62,8 +96,8 @@ fun MainScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Информация о сервисе
-            ServiceInfoCard(viewModel.getServicePackage())
-            ServiceConnectCard(viewModel)
+            ServiceInfoCard(servicePackage)
+            ServiceConnectCard(isConnected, onConnect, onDisconnect)
 
             Button(
                 modifier = Modifier.fillMaxWidth(),
