@@ -26,7 +26,7 @@ interface PiotManagerClient {
 
     suspend fun getAidlVersion(): PiotResult<Int>
 
-    suspend fun setShiftState(isClosed: Boolean, kktInfo: KktInfoModel): PiotResult<Unit>
+    suspend fun setShiftState(isClosed: Boolean, kktInfo: KktInfoModel): PiotResult<Boolean>
     suspend fun setImcData(imcData: String, kktInfo: KktInfoModel, isOnline: Boolean): PiotResult<Unit>
     suspend fun setError(request: ErrorRequestModel, kktInfo: KktInfoModel): PiotResult<Unit>
     suspend fun setIsmNotice(info: IsmNoticeInfoModel, kktInfo: KktInfoModel): PiotResult<Unit>
