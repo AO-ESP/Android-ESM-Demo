@@ -74,29 +74,29 @@ fun PiotScreen(
         onDisconnect = { viewModel.disconnectFromPiotManager() },
         onRefresh = { viewModel.refreshPiotManager() },
         servicePackage,
-        onSetShiftStateAction = { isClosed, KktInfoModel ->
-            viewModel.setShiftState(isClosed, KktInfoModel)
+        onSetShiftStateAction = { isClosed, kktInfo ->
+            viewModel.setShiftState(isClosed, kktInfo)
         },
-        onSetImcDataAction = { imcData, KktInfoModel, isOnline ->
-            viewModel.setImcData(imcData, KktInfoModel, isOnline)
+        onSetImcDataAction = { imcData, kktInfo, isOnline ->
+            viewModel.setImcData(imcData, kktInfo, isOnline)
         },
-        onSetErrorAction = { request, KktInfoModel ->
-            viewModel.setError(request, KktInfoModel)
+        onSetErrorAction = { request, kktInfo ->
+            viewModel.setError(request, kktInfo)
         },
-        onSetIsmNoticeAction = { info, KktInfoModel ->
-            viewModel.setIsmNotice(info, KktInfoModel)
+        onSetIsmNoticeAction = { info, kktInfo ->
+            viewModel.setIsmNotice(info, kktInfo)
         },
         onSetRawEventAction = { event ->
             viewModel.setRawEvent(event)
         },
-        onSetReceiptInfoModelAction = { info, KktInfoModel ->
-            viewModel.setReceiptInfo(info, KktInfoModel)
+        onSetReceiptInfoModelAction = { info, kktInfo ->
+            viewModel.setReceiptInfo(info, kktInfo)
         },
-        onSetKktInfoModelAction = { KktInfoModel ->
-            viewModel.setKktInfo(KktInfoModel)
+        onSetKktInfoModelAction = { kktInfo ->
+            viewModel.setKktInfo(kktInfo)
         },
-        onSetCashierAction = { CashierInfoModel, KktInfoModel ->
-            viewModel.setCashier(CashierInfoModel, KktInfoModel)
+        onSetCashierAction = { cashierInfo, kktInfo ->
+            viewModel.setCashier(cashierInfo, kktInfo)
         }
     )
 }
@@ -188,14 +188,8 @@ fun PiotScreenContent(
                 enabled = isConnected,
                 onClick = {
                     onSetShiftStateAction(
-                        false,
-                        KktInfoModel(
-                            "fnSerial",
-                            "kktInn",
-                            "kktSerial",
-                            "firmwareVersion",
-                            "fnVersion",
-                        )
+                        true,
+                        getDefaultKktInfoModel()
                     )
                 }
             ) {
@@ -207,13 +201,7 @@ fun PiotScreenContent(
                 onClick = {
                     onSetImcDataAction(
                         "imcData",
-                        KktInfoModel(
-                            "fnSerial",
-                            "kktInn",
-                            "kktSerial",
-                            "firmwareVersion",
-                            "fnVersion",
-                        ),
+                        getDefaultKktInfoModel(),
                         true
                     )
                 }
@@ -235,13 +223,7 @@ fun PiotScreenContent(
                                 )
                             )
                         ),
-                        KktInfoModel(
-                            "fnSerial",
-                            "kktInn",
-                            "kktSerial",
-                            "firmwareVersion",
-                            "fnVersion",
-                        )
+                        getDefaultKktInfoModel()
                     )
                 }
             ) {
@@ -258,13 +240,7 @@ fun PiotScreenContent(
                             123,
                             "receiptId"
                         ),
-                        KktInfoModel(
-                            "fnSerial",
-                            "kktInn",
-                            "kktSerial",
-                            "firmwareVersion",
-                            "fnVersion",
-                        )
+                        getDefaultKktInfoModel()
                     )
                 }
             ) {
@@ -293,13 +269,7 @@ fun PiotScreenContent(
                                 )
                             )
                         ),
-                        KktInfoModel(
-                            "fnSerial",
-                            "kktInn",
-                            "kktSerial",
-                            "firmwareVersion",
-                            "fnVersion",
-                        )
+                        getDefaultKktInfoModel()
                     )
                 }
             ) {
@@ -310,13 +280,7 @@ fun PiotScreenContent(
                 enabled = isConnected,
                 onClick = {
                     onSetKktInfoModelAction(
-                        KktInfoModel(
-                            "fnSerial",
-                            "kktInn",
-                            "kktSerial",
-                            "firmwareVersion",
-                            "fnVersion",
-                        )
+                        getDefaultKktInfoModel()
                     )
                 }
             ) {
@@ -331,13 +295,7 @@ fun PiotScreenContent(
                             "info",
                             "inn"
                         ),
-                        KktInfoModel(
-                            "fnSerial",
-                            "kktInn",
-                            "kktSerial",
-                            "firmwareVersion",
-                            "fnVersion",
-                        )
+                        getDefaultKktInfoModel()
                     )
                 }
             ) {
@@ -345,4 +303,14 @@ fun PiotScreenContent(
             }
         }
     }
+}
+
+private fun getDefaultKktInfoModel(): KktInfoModel {
+    return KktInfoModel(
+        "9999078902019459",
+        "9717169631",
+        "177044026786",
+        "firmwareVersion",
+        "1.2",
+    )
 }
