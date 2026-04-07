@@ -46,7 +46,6 @@ fun PiotScreenPreview() {
         isConnected = true,
         {},
         {},
-        {},
         "ServicePackage",
         { _, _ -> },
         { _, _, _ -> },
@@ -72,7 +71,6 @@ fun PiotScreen(
         isConnected,
         onConnect = { viewModel.connectToPiotManager() },
         onDisconnect = { viewModel.disconnectFromPiotManager() },
-        onRefresh = { viewModel.refreshPiotManager() },
         servicePackage,
         onSetShiftStateAction = { isClosed, kktInfo ->
             viewModel.setShiftState(isClosed, kktInfo)
@@ -108,7 +106,6 @@ fun PiotScreenContent(
     isConnected: Boolean,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
-    onRefresh: () -> Unit,
     servicePackage: String,
     onSetShiftStateAction: (
         isClosed: Boolean,
@@ -176,12 +173,6 @@ fun PiotScreenContent(
                 onClick = onDisconnect
             ) {
                 Text("Отключиться")
-            }
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = onRefresh
-            ) {
-                Text("Обновить")
             }
             Button(
                 modifier = Modifier.fillMaxWidth(),
