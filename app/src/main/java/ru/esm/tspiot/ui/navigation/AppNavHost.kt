@@ -14,8 +14,10 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import ru.esm.tspiot.ui.scanner.ScannerScreen
 import ru.esm.tspiot.ui.screens.CodesCheckScreen
 import ru.esm.tspiot.ui.screens.LmScreen
+import ru.esm.tspiot.ui.screens.MainScanScreen
 import ru.esm.tspiot.ui.screens.MainScreen
 import ru.esm.tspiot.ui.screens.PermissionScreen
+import ru.esm.tspiot.ui.screens.PiotScreen
 
 val LocalNavController = compositionLocalOf<NavHostController> {
     error("No NavController provided")
@@ -39,6 +41,8 @@ fun AppNavHost(
 @OptIn(ExperimentalPermissionsApi::class)
 private fun NavGraphBuilder.initNavigation() {
     composable(AppRoute.id) { MainScreen() }
+    composable(AppRoute.MainScanScreenRoute.id) { MainScanScreen() }
+    composable(AppRoute.MainPiotScreenRoute.id) { PiotScreen() }
     composable(AppRoute.CodesCheckScreenRoute.id) { CodesCheckScreen() }
     composable(AppRoute.LmScreenRoute.id) { LmScreen() }
     composable(AppRoute.ScannerScreenRoute.id) { ScannerScreen() }

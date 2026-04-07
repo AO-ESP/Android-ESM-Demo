@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,25 +17,29 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import ru.esm.tspiot.ui.navigation.AppRoute
+import ru.esm.tspiot.ui.items.ServiceConnectCard
+import ru.esm.tspiot.ui.items.ServiceInfoCard
 import ru.esm.tspiot.ui.navigation.LocalNavController
 import ru.esm.tspiot.ui.navigation.createPreviewNavController
 import ru.esm.tspiot.ui.viewmodels.MainViewModel
 
 @Preview
 @Composable
-fun MainScreenPreview() {
-    MainScreenContent(
+fun MainScanScreenPreview() {
+    MainScanScreenContent(
         navController = createPreviewNavController(),
+        isConnected = true,
         {},
         {},
         "ServicePackage"
@@ -43,14 +47,16 @@ fun MainScreenPreview() {
 }
 
 @Composable
-fun MainScreen(
+fun MainScanScreen(
     navController: NavHostController = LocalNavController.current,
     viewModel: MainViewModel = hiltViewModel(),
 ) {
+    val isConnected by viewModel.isESMServiceConnected.collectAsStateWithLifecycle()
     val servicePackage = viewModel.getServicePackage()
 
-    MainScreenContent(
+    MainScanScreenContent(
         navController,
+        isConnected,
         onConnect = { viewModel.connectToESMService() },
         onDisconnect = { viewModel.disconnectFromESMService() },
         servicePackage
@@ -59,8 +65,9 @@ fun MainScreen(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
-fun MainScreenContent(
+fun MainScanScreenContent(
     navController: NavHostController,
+    isConnected: Boolean,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
     servicePackage: String
@@ -73,14 +80,8 @@ fun MainScreenContent(
                 title = { Text("ESM Demo") },
                 navigationIcon = {
                     IconButton(
-                        onClick = { (context as? android.app.Activity)?.finish() },
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Default.ExitToApp,
-                            contentDescription  = "Выход",
-                            modifier = Modifier.rotate(180f)
-                        )
-                    }
+                        onClick = { navController.navigate(AppRoute.id) }
+                    ) { Icon(Icons.AutoMirrored.Default.ArrowBack, null) }
                 }
             )
         }
@@ -94,18 +95,23 @@ fun MainScreenContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Информация о сервисе
+            ServiceInfoCard(servicePackage)
+            ServiceConnectCard(isConnected, onConnect, onDisconnect)
 
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { navController.navigate(AppRoute.MainScanScreenRoute.id) }
+                enabled = isConnected,
+                onClick = { navController.navigate(AppRoute.CodesCheckScreenRoute.id) }
             ) {
-                Text("Сканер")
+                Text("Проверка марок")
             }
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { navController.navigate(AppRoute.MainPiotScreenRoute.id) }
+                enabled = isConnected,
+                onClick = { navController.navigate(AppRoute.LmScreenRoute.id) }
             ) {
-                Text("ПИоТ")
+                Text("Работа с ЛМ ЧЗ")
             }
         }
     }

@@ -20,6 +20,12 @@
         <intent>
             <action android:name="ru.esp.esm.action.ACTION_ESM_SERVICE" />
         </intent>
+        <intent>
+            <action android:name="ru.esm.tspiot.action.ACTION_PIOT_MANAGER" />
+        </intent>
+        <intent>
+            <action android:name="ru.atol.os.tspiot.action.ACTION_PIOT_MANAGER" />
+        </intent>
     </queries>
 
     <application
