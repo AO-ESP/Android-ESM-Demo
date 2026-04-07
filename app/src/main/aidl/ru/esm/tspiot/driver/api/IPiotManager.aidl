@@ -11,7 +11,6 @@ import ru.esm.tspiot.driver.api.model.ReceiptInfo;
 import ru.esm.tspiot.driver.api.model.CashierInfo;
 
 interface IPiotManager {
-    int getAidlVersion();
     void setShiftState(in IBoolCallback callback, in boolean isClosed, in KktInfo kktInfo);
     void setImcData(in IResultCallback callback, in String imcData, in KktInfo kktInfo, in boolean isOnline);
     void setError(in IResultCallback callback, in ErrorRequest request, in KktInfo kktInfo);

@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import ru.esm.tspiot.data.mapper.mapToESMModel
-import ru.esm.tspiot.domain.PiotResult
 import ru.esm.tspiot.driver.api.IPiotManager
 import ru.esm.tspiot.driver.api.callback.IBoolCallback
 import ru.esm.tspiot.driver.api.callback.IResultCallback
@@ -23,11 +22,10 @@ import ru.esm.tspiot.data.models.IsmNoticeInfoModel
 import ru.esm.tspiot.data.models.KktInfoModel
 import ru.esm.tspiot.data.models.ReceiptInfoModel
 import javax.inject.Inject
-import kotlin.coroutines.resume
 
 class PiotESMManagerClientImpl @Inject constructor(
     @param:ApplicationContext val context: Context
-): PiotManagerClient {
+) : PiotManagerClient {
 
     var iPiotManager: IPiotManager? = null
     override val lock = Any()
@@ -80,120 +78,112 @@ class PiotESMManagerClientImpl @Inject constructor(
         }
     }
 
-    /**
-     * Проверяет активность сервиса через вызов getAidlVersion().
-     */
-    override suspend fun ping(): Boolean {
-        return when (getAidlVersion()) {
-            is PiotResult.Success -> true
-            else -> false
-        }
+    override suspend fun setShiftState(isClosed: Boolean, kktInfo: KktInfoModel) {
+        executeCallback { m, cb -> m.setShiftState(cb, isClosed, kktInfo.mapToESMModel()) }
     }
 
-    /**
-     * Получает версию AIDL интерфейса.
-     */
-    override suspend fun getAidlVersion(): PiotResult<Int> {
-        val manager = synchronized(lock) { iPiotManager }
-        return manager?.runCatching {
-            getAidlVersion()
-        }?.fold(
-            onSuccess = { PiotResult.Success(it) },
-            onFailure = { e ->
-                if (e is RemoteException) PiotResult.Error(-1, e.message)
-                else PiotResult.Error(-2, e.message)
-            }
-        ) ?: PiotResult.ServiceUnavailable
-    }
-
-    override suspend fun setShiftState(isClosed: Boolean, kktInfo: KktInfoModel) =
-        executeCallback {m, cb -> m.setShiftState(cb, isClosed, kktInfo.mapToESMModel())  }
 
     override suspend fun setImcData(imcData: String, kktInfo: KktInfoModel, isOnline: Boolean) =
-        executeUnitCallback {m, cb -> m.setImcData(cb, imcData, kktInfo.mapToESMModel(), isOnline)  }
+        executeUnitCallback { m, cb ->
+            m.setImcData(
+                cb,
+                imcData,
+                kktInfo.mapToESMModel(),
+                isOnline
+            )
+        }
 
     override suspend fun setError(request: ErrorRequestModel, kktInfo: KktInfoModel) =
-        executeUnitCallback {m, cb -> m.setError(cb, request.mapToESMModel(), kktInfo.mapToESMModel())  }
+        executeUnitCallback { m, cb ->
+            m.setError(
+                cb,
+                request.mapToESMModel(),
+                kktInfo.mapToESMModel()
+            )
+        }
 
     override suspend fun setIsmNotice(info: IsmNoticeInfoModel, kktInfo: KktInfoModel) =
-        executeUnitCallback {m, cb -> m.setIsmNotice(cb, info.mapToESMModel(), kktInfo.mapToESMModel())  }
+        executeUnitCallback { m, cb ->
+            m.setIsmNotice(
+                cb,
+                info.mapToESMModel(),
+                kktInfo.mapToESMModel()
+            )
+        }
 
     override suspend fun setRawEvent(event: String) =
-        executeUnitCallback {m, cb -> m.setRawEvent(cb, event)  }
+        executeUnitCallback { m, cb -> m.setRawEvent(cb, event) }
 
-    override  suspend fun setReceiptInfo(info: ReceiptInfoModel, kktInfo: KktInfoModel) =
-        executeUnitCallback {m, cb -> m.setReceiptInfo(cb, info.mapToESMModel(), kktInfo.mapToESMModel())  }
+    override suspend fun setReceiptInfo(info: ReceiptInfoModel, kktInfo: KktInfoModel) =
+        executeUnitCallback { m, cb ->
+            m.setReceiptInfo(
+                cb,
+                info.mapToESMModel(),
+                kktInfo.mapToESMModel()
+            )
+        }
 
     override suspend fun setKktInfo(kktInfo: KktInfoModel) =
-        executeUnitCallback {m, cb -> m.setKktInfo(cb, kktInfo.mapToESMModel())  }
+        executeUnitCallback { m, cb -> m.setKktInfo(cb, kktInfo.mapToESMModel()) }
 
-    override  suspend fun setCashier(cashierInfo: CashierInfoModel, kktInfo: KktInfoModel) =
-        executeUnitCallback {m, cb -> m.setCashier(cb, cashierInfo.mapToESMModel(), kktInfo.mapToESMModel())  }
+    override suspend fun setCashier(cashierInfo: CashierInfoModel, kktInfo: KktInfoModel) =
+        executeUnitCallback { m, cb ->
+            m.setCashier(
+                cb,
+                cashierInfo.mapToESMModel(),
+                kktInfo.mapToESMModel()
+            )
+        }
 
     /**
      * Универсальный метод для колбэк-ориентированных вызовов.
      */
     suspend fun executeCallback(
         action: (IPiotManager, IBoolCallback) -> Unit
-    ): PiotResult<Boolean> {
+    ) {
         val manager = synchronized(lock) { iPiotManager }
-        if (manager == null) return PiotResult.ServiceUnavailable
+        if (manager == null) return
 
-        return suspendCancellableCoroutine { continuation ->
+        return suspendCancellableCoroutine {
             val callback = object : IBoolCallback.Stub() {
                 override fun onSuccess(status: Boolean) {
-                    if (continuation.isActive) {
-                        continuation.resume(
-                            PiotResult.Success(status) // Safe: Bundle is T for all methods
-                        )
-                    }
+                    Log.i("Logcat", "executeCallback Success $status")
                 }
 
                 override fun onFailure(code: Int, message: String?) {
-                    if (continuation.isActive) {
-                        continuation.resume(PiotResult.Error(code, message))
-                    }
+                    Log.e("Logcat", "executeCallback code $code, message $message")
                 }
             }
 
             try {
                 action(manager, callback)
             } catch (e: RemoteException) {
-                if (continuation.isActive) {
-                    continuation.resume(PiotResult.Error(-1, e.message))
-                }
+                Log.e("Logcat", "executeCallback catch, message ${e.message}")
             }
         }
     }
+
     suspend fun executeUnitCallback(
         action: (IPiotManager, IResultCallback) -> Unit
-    ): PiotResult<Unit> {
+    ) {
         val manager = synchronized(lock) { iPiotManager }
-        if (manager == null) return PiotResult.ServiceUnavailable
+        if (manager == null) return
 
-        return suspendCancellableCoroutine { continuation ->
+        return suspendCancellableCoroutine {
             val callback = object : IResultCallback.Stub() {
                 override fun onSuccess() {
-                    if (continuation.isActive) {
-                        continuation.resume(
-                            PiotResult.Success(Unit) // Safe: Bundle is T for all methods
-                        )
-                    }
+                    Log.i("Logcat", "executeUnitCallback Success")
                 }
 
                 override fun onFailure(code: Int, message: String?) {
-                    if (continuation.isActive) {
-                        continuation.resume(PiotResult.Error(code, message))
-                    }
+                    Log.e("Logcat", "executeUnitCallback code $code, message $message")
                 }
             }
 
             try {
                 action(manager, callback)
             } catch (e: RemoteException) {
-                if (continuation.isActive) {
-                    continuation.resume(PiotResult.Error(-1, e.message))
-                }
+                Log.e("Logcat", "executeCallback catch, message ${e.message}")
             }
         }
     }

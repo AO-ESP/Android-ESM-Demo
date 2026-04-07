@@ -9,7 +9,6 @@ import ru.esm.tspiot.data.models.ErrorRequestModel
 import ru.esm.tspiot.data.models.IsmNoticeInfoModel
 import ru.esm.tspiot.data.models.KktInfoModel
 import ru.esm.tspiot.data.models.ReceiptInfoModel
-import ru.esm.tspiot.domain.PiotResult
 
 interface PiotManagerClient {
 
@@ -22,16 +21,12 @@ interface PiotManagerClient {
     fun connect(intent: Intent)
     fun disconnect()
 
-    suspend fun ping(): Boolean
-
-    suspend fun getAidlVersion(): PiotResult<Int>
-
-    suspend fun setShiftState(isClosed: Boolean, kktInfo: KktInfoModel): PiotResult<Boolean>
-    suspend fun setImcData(imcData: String, kktInfo: KktInfoModel, isOnline: Boolean): PiotResult<Unit>
-    suspend fun setError(request: ErrorRequestModel, kktInfo: KktInfoModel): PiotResult<Unit>
-    suspend fun setIsmNotice(info: IsmNoticeInfoModel, kktInfo: KktInfoModel): PiotResult<Unit>
-    suspend fun setRawEvent(event: String): PiotResult<Unit>
-    suspend fun setReceiptInfo(info: ReceiptInfoModel, kktInfo: KktInfoModel): PiotResult<Unit>
-    suspend fun setKktInfo(kktInfo: KktInfoModel): PiotResult<Unit>
-    suspend fun setCashier(cashierInfo: CashierInfoModel, kktInfo: KktInfoModel): PiotResult<Unit>
+    suspend fun setShiftState(isClosed: Boolean, kktInfo: KktInfoModel)
+    suspend fun setImcData(imcData: String, kktInfo: KktInfoModel, isOnline: Boolean)
+    suspend fun setError(request: ErrorRequestModel, kktInfo: KktInfoModel)
+    suspend fun setIsmNotice(info: IsmNoticeInfoModel, kktInfo: KktInfoModel)
+    suspend fun setRawEvent(event: String)
+    suspend fun setReceiptInfo(info: ReceiptInfoModel, kktInfo: KktInfoModel)
+    suspend fun setKktInfo(kktInfo: KktInfoModel)
+    suspend fun setCashier(cashierInfo: CashierInfoModel, kktInfo: KktInfoModel)
 }

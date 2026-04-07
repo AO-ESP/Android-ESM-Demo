@@ -71,14 +71,6 @@ class MainViewModel @Inject constructor(
         piotManagerClient.disconnect()
     }
 
-    fun refreshPiotManager() {
-        viewModelScope.launch {
-            piotManagerClient.let {
-                _pingPiotManagerResult.value = PiotResult.Success(it.ping())
-            }
-        }
-    }
-
     fun setShiftState(isClosed: Boolean, kktInfo: KktInfoModel){
         viewModelScope.launch {
             piotManagerClient.setShiftState(
