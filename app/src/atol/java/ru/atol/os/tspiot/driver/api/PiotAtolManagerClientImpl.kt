@@ -135,7 +135,7 @@ class PiotAtolManagerClientImpl  @Inject constructor(
      */
     private suspend fun executeCallback(
         action: (IPiotManager, IBoolCallback) -> Unit
-    ): PiotResult<Unit> {
+    ): PiotResult<Boolean> {
         val manager = synchronized(lock) { iPiotManager }
         if (manager == null) return PiotResult.ServiceUnavailable
 
@@ -144,7 +144,7 @@ class PiotAtolManagerClientImpl  @Inject constructor(
                 override fun onSuccess(status: Boolean) {
                     if (continuation.isActive) {
                         continuation.resume(
-                            PiotResult.Success(Unit) // Safe: Bundle is T for all methods
+                            PiotResult.Success(status) // Safe: Bundle is T for all methods
                         )
                     }
                 }
