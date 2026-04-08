@@ -190,8 +190,9 @@ fun PiotScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = isConnected,
                 onClick = {
+
                     onSetImcDataAction(
-                        "imcData",
+                        "imcData", // информация о кодах маркировки в чеке
                         getDefaultKktInfoModel(),
                         true
                     )
@@ -207,10 +208,10 @@ fun PiotScreenContent(
                         ErrorRequestModel(
                             listOf(
                                 ErrorInfoModel(
-                                    0,
-                                    "message",
-                                    "module",
-                                    "type"
+                                    0, // код ошибки
+                                    "message", // описание ошибки
+                                    "module", // источник ошибки (ДККТ/ККТ/ФН)
+                                    "type" // вид ошибки
                                 )
                             )
                         ),
@@ -225,11 +226,12 @@ fun PiotScreenContent(
                 enabled = isConnected,
                 onClick = {
                     onSetIsmNoticeAction(
+                        // Событие формирования и отправки уведомления в ОФД/ГИС МТ
                         IsmNoticeInfoModel(
-                            "issueDate",
-                            "sendDate",
-                            123,
-                            "receiptId"
+                            "issueDate", // дата и время формирования уведомления в формате YYYY-MM-DD hh:mm:ss
+                            "sendDate", // дата и время отправки уведомления в ОФД/ГИС МТ в формате YYYY-MM-DD hh:mm:ss
+                            123, // номер уведомления
+                            "receiptId" // номер чека
                         ),
                         getDefaultKktInfoModel()
                     )
@@ -241,7 +243,7 @@ fun PiotScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = isConnected,
                 onClick = {
-                    onSetRawEventAction("event")
+                    onSetRawEventAction("event") // Событие эвента
                 }
             ) {
                 Text("Set Raw Event")
@@ -252,11 +254,11 @@ fun PiotScreenContent(
                 onClick = {
                     onSetReceiptInfoModelAction(
                         ReceiptInfoModel(
-                            "receiptId",
+                            "receiptId", // номер чека
                             listOf(
                                 ReceiptImcDataModel(
-                                    "ki",
-                                    "ofdStatus"
+                                    "ki", // номер ФД в ФН
+                                    "ofdStatus" // статус ОФД
                                 )
                             )
                         ),
@@ -283,8 +285,8 @@ fun PiotScreenContent(
                 onClick = {
                     onSetCashierAction(
                         CashierInfoModel(
-                            "info",
-                            "inn"
+                            "Мариваннна", // ФИО пользователя ТС ПИоТ
+                            "9826267492" // ИНН пользователя ТС ПИоТ
                         ),
                         getDefaultKktInfoModel()
                     )
@@ -298,10 +300,10 @@ fun PiotScreenContent(
 
 private fun getDefaultKktInfoModel(): KktInfoModel {
     return KktInfoModel(
-        "9999078902019459",
-        "9717169631",
-        "177044026786",
-        "firmwareVersion",
-        "1.2",
+        "9999078902019459", // Серийный номер ФН (Фискальный накопитель)
+        "9717169631", // ИНН Владельца
+        "00109428623100", // Серийный номер ККТ (Контрольно кассовая техника)
+        "5.10.50", // Версия прошивки ККТ
+        "n 1.2 mgm-p 11", // Версия ФН
     )
 }
