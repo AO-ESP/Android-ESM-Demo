@@ -99,13 +99,13 @@ fun MainScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { navController.navigate(AppRoute.MainScanScreenRoute.id) }
             ) {
-                Text("Сканер")
+                Text("Работа с марками")
             }
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { navController.navigate(AppRoute.MainPiotScreenRoute.id) }
             ) {
-                Text("ПИоТ")
+                Text("Работа с событиями")
             }
         }
     }
