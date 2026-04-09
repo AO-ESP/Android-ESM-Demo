@@ -10,7 +10,6 @@ import ru.atol.os.tspiot.driver.api.model.ReceiptImcData;
 import ru.atol.os.tspiot.driver.api.model.ReceiptInfo;
 
 interface IPiotManager {
-    int getAidlVersion();
     void setShiftState(in IBoolCallback callback, in boolean isClosed, in KktInfo kktInfo);
     void setImcData(in IResultCallback callback, in String imcData, in KktInfo kktInfo, in boolean isOnline);
     void setError(in IResultCallback callback, in ErrorRequest request, in KktInfo kktInfo);
