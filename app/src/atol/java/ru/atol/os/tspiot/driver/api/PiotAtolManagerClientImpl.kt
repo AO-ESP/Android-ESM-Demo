@@ -80,31 +80,6 @@ class PiotAtolManagerClientImpl  @Inject constructor(
         }
     }
 
-    /**
-     * Проверяет активность сервиса через вызов getAidlVersion().
-     */
-    override suspend fun ping(): Boolean {
-        return when (getAidlVersion()) {
-            is PiotResult.Success -> true
-            else -> false
-        }
-    }
-
-    /**
-     * Получает версию AIDL интерфейса.
-     */
-    override suspend fun getAidlVersion(): PiotResult<Int> {
-        val manager = synchronized(lock) { iPiotManager }
-        return manager?.runCatching {
-            getAidlVersion()
-        }?.fold(
-            onSuccess = { PiotResult.Success(it) },
-            onFailure = { e ->
-                if (e is RemoteException) PiotResult.Error(-1, e.message)
-                else PiotResult.Error(-2, e.message)
-            }
-        ) ?: PiotResult.ServiceUnavailable
-    }
 
     override suspend fun setShiftState(isClosed: Boolean, kktInfo: KktInfoModel) =
         executeCallback {m, cb -> m.setShiftState(cb, isClosed, kktInfo.mapToESMModel())  }
@@ -135,65 +110,50 @@ class PiotAtolManagerClientImpl  @Inject constructor(
      */
     private suspend fun executeCallback(
         action: (IPiotManager, IBoolCallback) -> Unit
-    ): PiotResult<Boolean> {
+    ) {
         val manager = synchronized(lock) { iPiotManager }
-        if (manager == null) return PiotResult.ServiceUnavailable
+        if (manager == null) return
 
         return suspendCancellableCoroutine { continuation ->
             val callback = object : IBoolCallback.Stub() {
                 override fun onSuccess(status: Boolean) {
-                    if (continuation.isActive) {
-                        continuation.resume(
-                            PiotResult.Success(status) // Safe: Bundle is T for all methods
-                        )
-                    }
+                    Log.i("Logcat", "executeCallback Success $status")
                 }
 
                 override fun onFailure(code: Int, message: String?) {
-                    if (continuation.isActive) {
-                        continuation.resume(PiotResult.Error(code, message))
-                    }
+                    Log.e("Logcat", "executeCallback code $code, message $message")
                 }
             }
 
             try {
                 action(manager, callback)
             } catch (e: RemoteException) {
-                if (continuation.isActive) {
-                    continuation.resume(PiotResult.Error(-1, e.message))
-                }
+                Log.e("Logcat", "executeCallback catch, message ${e.message}")
+
             }
         }
     }
     private suspend fun executeUnitCallback(
         action: (IPiotManager, IResultCallback) -> Unit
-    ): PiotResult<Unit> {
+    ) {
         val manager = synchronized(lock) { iPiotManager }
-        if (manager == null) return PiotResult.ServiceUnavailable
+        if (manager == null) return
 
         return suspendCancellableCoroutine { continuation ->
             val callback = object : IResultCallback.Stub() {
                 override fun onSuccess() {
-                    if (continuation.isActive) {
-                        continuation.resume(
-                            PiotResult.Success(Unit) // Safe: Bundle is T for all methods
-                        )
-                    }
+                    Log.i("Logcat", "executeUnitCallback Success")
                 }
 
                 override fun onFailure(code: Int, message: String?) {
-                    if (continuation.isActive) {
-                        continuation.resume(PiotResult.Error(code, message))
-                    }
+                    Log.e("Logcat", "executeUnitCallback code $code, message $message")
                 }
             }
 
             try {
                 action(manager, callback)
             } catch (e: RemoteException) {
-                if (continuation.isActive) {
-                    continuation.resume(PiotResult.Error(-1, e.message))
-                }
+                Log.e("Logcat", "executeCallback catch, message ${e.message}")
             }
         }
     }
