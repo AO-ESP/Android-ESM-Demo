@@ -47,3 +47,6 @@ val intent = Intent(ESM_SERVICE_ACTION).apply {setPackage(PACKAGE)}
 
 context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
 ```
+
+## Особенность сборки
+Для сборки ATOL/Все остальные нужно переключить имплементацию интерфейса PiotManagerClient в AppModule
