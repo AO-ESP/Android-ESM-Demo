@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import ru.esm.tspiot.data.models.CashierInfoModel
 import ru.esm.tspiot.data.models.ErrorRequestModel
+import ru.esm.tspiot.data.models.ImcData
 import ru.esm.tspiot.data.models.IsmNoticeInfoModel
 import ru.esm.tspiot.data.models.KktInfoModel
 import ru.esm.tspiot.data.models.ReceiptInfoModel
@@ -22,7 +23,7 @@ interface PiotManagerClient {
     fun disconnect()
 
     suspend fun setShiftState(isClosed: Boolean, kktInfo: KktInfoModel)
-    suspend fun setImcData(imcData: String, kktInfo: KktInfoModel, isOnline: Boolean)
+    suspend fun setImcData(imcData: ImcData, kktInfo: KktInfoModel, isOnline: Boolean)
     suspend fun setError(request: ErrorRequestModel, kktInfo: KktInfoModel)
     suspend fun setIsmNotice(info: IsmNoticeInfoModel, kktInfo: KktInfoModel)
     suspend fun setRawEvent(event: String)

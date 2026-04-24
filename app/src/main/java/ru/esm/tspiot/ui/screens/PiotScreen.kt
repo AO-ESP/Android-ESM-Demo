@@ -29,6 +29,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import ru.esm.tspiot.data.models.CashierInfoModel
 import ru.esm.tspiot.data.models.ErrorInfoModel
 import ru.esm.tspiot.data.models.ErrorRequestModel
+import ru.esm.tspiot.data.models.ImcData
 import ru.esm.tspiot.data.models.IsmNoticeInfoModel
 import ru.esm.tspiot.data.models.KktInfoModel
 import ru.esm.tspiot.data.models.ReceiptImcDataModel
@@ -37,6 +38,7 @@ import ru.esm.tspiot.ui.navigation.AppRoute
 import ru.esm.tspiot.ui.navigation.LocalNavController
 import ru.esm.tspiot.ui.navigation.createPreviewNavController
 import ru.esm.tspiot.ui.viewmodels.MainViewModel
+import ru.esm.tspiot.ui.viewmodels.PiotScreenManageConsumer
 
 @Preview
 @Composable
@@ -44,17 +46,18 @@ fun PiotScreenPreview() {
     PiotScreenContent(
         navController = createPreviewNavController(),
         isConnected = true,
-        {},
-        {},
-        "ServicePackage",
-        { _, _ -> },
-        { _, _, _ -> },
-        { _, _ -> },
-        { _, _ -> },
-        { _ -> },
-        { _, _ -> },
-        { _ -> },
-        { _, _ -> },
+        manageConsumer = PiotScreenManageConsumer(
+            {},
+            {},
+            { _, _ -> },
+            { _, _, _ -> },
+            { _, _ -> },
+            { _, _ -> },
+            { _ -> },
+            { _, _ -> },
+            { _ -> },
+            { _, _ -> },
+        )
     )
 }
 
@@ -64,38 +67,11 @@ fun PiotScreen(
     viewModel: MainViewModel = hiltViewModel(),
 ) {
     val isConnected by viewModel.isPiotManagerConnected.collectAsStateWithLifecycle()
-    val servicePackage = viewModel.getServicePackage()
 
     PiotScreenContent(
-        navController,
-        isConnected,
-        onConnect = { viewModel.connectToPiotManager() },
-        onDisconnect = { viewModel.disconnectFromPiotManager() },
-        servicePackage,
-        onSetShiftStateAction = { isClosed, kktInfo ->
-            viewModel.setShiftState(isClosed, kktInfo)
-        },
-        onSetImcDataAction = { imcData, kktInfo, isOnline ->
-            viewModel.setImcData(imcData, kktInfo, isOnline)
-        },
-        onSetErrorAction = { request, kktInfo ->
-            viewModel.setError(request, kktInfo)
-        },
-        onSetIsmNoticeAction = { info, kktInfo ->
-            viewModel.setIsmNotice(info, kktInfo)
-        },
-        onSetRawEventAction = { event ->
-            viewModel.setRawEvent(event)
-        },
-        onSetReceiptInfoModelAction = { info, kktInfo ->
-            viewModel.setReceiptInfo(info, kktInfo)
-        },
-        onSetKktInfoModelAction = { kktInfo ->
-            viewModel.setKktInfo(kktInfo)
-        },
-        onSetCashierAction = { cashierInfo, kktInfo ->
-            viewModel.setCashier(cashierInfo, kktInfo)
-        }
+        navController = navController,
+        isConnected = isConnected,
+        manageConsumer = viewModel.getScreenManageConsumer()
     )
 }
 
@@ -104,40 +80,7 @@ fun PiotScreen(
 fun PiotScreenContent(
     navController: NavHostController,
     isConnected: Boolean,
-    onConnect: () -> Unit,
-    onDisconnect: () -> Unit,
-    servicePackage: String,
-    onSetShiftStateAction: (
-        isClosed: Boolean,
-        KktInfoModel: KktInfoModel,
-    ) -> Unit,
-    onSetImcDataAction: (
-        imcData: String,
-        KktInfoModel: KktInfoModel,
-        isOnline: Boolean
-    ) -> Unit,
-    onSetErrorAction: (
-        request: ErrorRequestModel,
-        KktInfoModel: KktInfoModel
-    ) -> Unit,
-    onSetIsmNoticeAction: (
-        info: IsmNoticeInfoModel,
-        KktInfoModel: KktInfoModel
-    ) -> Unit,
-    onSetRawEventAction: (
-        event: String
-    ) -> Unit,
-    onSetReceiptInfoModelAction: (
-        info: ReceiptInfoModel,
-        KktInfoModel: KktInfoModel
-    ) -> Unit,
-    onSetKktInfoModelAction: (
-        KktInfoModel: KktInfoModel
-    ) -> Unit,
-    onSetCashierAction: (
-        CashierInfoModel: CashierInfoModel,
-        KktInfoModel: KktInfoModel
-    ) -> Unit
+    manageConsumer: PiotScreenManageConsumer
 ) {
 
     Scaffold(
@@ -164,13 +107,13 @@ fun PiotScreenContent(
 
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = onConnect
+                onClick = manageConsumer.onConnect
             ) {
                 Text("Подключиться")
             }
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = onDisconnect
+                onClick = manageConsumer.onDisconnect
             ) {
                 Text("Отключиться")
             }
@@ -178,7 +121,7 @@ fun PiotScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = isConnected,
                 onClick = {
-                    onSetShiftStateAction(
+                    manageConsumer.onSetShiftStateAction(
                         true,
                         getDefaultKktInfoModel()
                     )
@@ -190,9 +133,8 @@ fun PiotScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = isConnected,
                 onClick = {
-
-                    onSetImcDataAction(
-                        "imcData", // информация о кодах маркировки в чеке
+                    manageConsumer.onSetImcDataAction(
+                        ImcData(), // информация о кодах маркировки в чеке
                         getDefaultKktInfoModel(),
                         true
                     )
@@ -204,7 +146,7 @@ fun PiotScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = isConnected,
                 onClick = {
-                    onSetErrorAction(
+                    manageConsumer.onSetErrorAction(
                         ErrorRequestModel(
                             listOf(
                                 ErrorInfoModel(
@@ -225,7 +167,7 @@ fun PiotScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = isConnected,
                 onClick = {
-                    onSetIsmNoticeAction(
+                    manageConsumer.onSetIsmNoticeAction(
                         // Событие формирования и отправки уведомления в ОФД/ГИС МТ
                         IsmNoticeInfoModel(
                             "issueDate", // дата и время формирования уведомления в формате YYYY-MM-DD hh:mm:ss
@@ -243,7 +185,7 @@ fun PiotScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = isConnected,
                 onClick = {
-                    onSetRawEventAction("event") // Событие эвента
+                    manageConsumer.onSetRawEventAction("event") // Событие эвента
                 }
             ) {
                 Text("Set Raw Event")
@@ -252,7 +194,7 @@ fun PiotScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = isConnected,
                 onClick = {
-                    onSetReceiptInfoModelAction(
+                    manageConsumer.onSetReceiptInfoModelAction(
                         ReceiptInfoModel(
                             "receiptId", // номер чека
                             listOf(
@@ -272,7 +214,7 @@ fun PiotScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = isConnected,
                 onClick = {
-                    onSetKktInfoModelAction(
+                    manageConsumer.onSetKktInfoModelAction(
                         getDefaultKktInfoModel()
                     )
                 }
@@ -283,7 +225,7 @@ fun PiotScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = isConnected,
                 onClick = {
-                    onSetCashierAction(
+                    manageConsumer.onSetCashierAction(
                         CashierInfoModel(
                             "Мариваннна", // ФИО пользователя ТС ПИоТ
                             "9826267492" // ИНН пользователя ТС ПИоТ

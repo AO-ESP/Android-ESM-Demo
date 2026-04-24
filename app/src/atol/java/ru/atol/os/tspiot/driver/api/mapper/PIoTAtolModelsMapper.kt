@@ -1,5 +1,6 @@
 package ru.atol.os.tspiot.driver.api.mapper
 
+import kotlinx.serialization.json.Json
 import ru.esm.tspiot.data.models.CashierInfoModel
 import ru.esm.tspiot.data.models.ErrorInfoModel
 import ru.esm.tspiot.data.models.ErrorRequestModel
@@ -14,6 +15,7 @@ import ru.atol.os.tspiot.driver.api.model.IsmNoticeInfo
 import ru.atol.os.tspiot.driver.api.model.KktInfo
 import ru.atol.os.tspiot.driver.api.model.ReceiptImcData
 import ru.atol.os.tspiot.driver.api.model.ReceiptInfo
+import ru.esm.tspiot.data.models.ImcData
 
 fun CashierInfoModel.mapToESMModel(): CashierInfo {
     return CashierInfo(
@@ -80,4 +82,8 @@ fun ReceiptInfoModel.mapToESMModel(): ReceiptInfo {
             )
         },
     )
+}
+
+fun ImcData.toJsonString(): String {
+    return Json.encodeToString(this)
 }

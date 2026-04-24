@@ -11,6 +11,7 @@ import ru.esm.tspiot.data.EsmServiceClient
 import ru.esm.tspiot.data.PiotManagerClient
 import ru.esm.tspiot.data.models.CashierInfoModel
 import ru.esm.tspiot.data.models.ErrorRequestModel
+import ru.esm.tspiot.data.models.ImcData
 import ru.esm.tspiot.data.models.IsmNoticeInfoModel
 import ru.esm.tspiot.data.models.KktInfoModel
 import ru.esm.tspiot.data.models.ReceiptInfoModel
@@ -79,7 +80,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun setImcData(imcData: String, kktInfo: KktInfoModel, isOnline: Boolean){
+    fun setImcData(imcData: ImcData, kktInfo: KktInfoModel, isOnline: Boolean){
         viewModelScope.launch {
             piotManagerClient.setImcData(
                 imcData, kktInfo, isOnline
@@ -131,6 +132,37 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun getScreenManageConsumer(): PiotScreenManageConsumer {
+        return PiotScreenManageConsumer (
+            onConnect = { connectToPiotManager() },
+            onDisconnect = { disconnectFromPiotManager() },
+            onSetShiftStateAction = { isClosed, kktInfo ->
+                setShiftState(isClosed, kktInfo)
+            },
+            onSetImcDataAction = { imcData, kktInfo, isOnline ->
+                setImcData(imcData, kktInfo, isOnline)
+            },
+            onSetErrorAction = { request, kktInfo ->
+                setError(request, kktInfo)
+            },
+            onSetIsmNoticeAction = { info, kktInfo ->
+                setIsmNotice(info, kktInfo)
+            },
+            onSetRawEventAction = { event ->
+                setRawEvent(event)
+            },
+            onSetReceiptInfoModelAction = { info, kktInfo ->
+                setReceiptInfo(info, kktInfo)
+            },
+            onSetKktInfoModelAction = { kktInfo ->
+                setKktInfo(kktInfo)
+            },
+            onSetCashierAction = { cashierInfo, kktInfo ->
+                setCashier(cashierInfo, kktInfo)
+            }
+        )
+    }
+
     fun getServicePackage(): String {
         return when (BuildConfig.FLAVOR) {
             "atol" -> ATOL_PACKAGE
@@ -146,3 +178,41 @@ class MainViewModel @Inject constructor(
         private const val OTHER_PACKAGE = "ru.esp.tspiot"
     }
 }
+
+
+
+data class PiotScreenManageConsumer(
+    val onConnect: () -> Unit,
+    val onDisconnect: () -> Unit,
+    val onSetShiftStateAction: (
+        isClosed: Boolean,
+        KktInfoModel: KktInfoModel,
+    ) -> Unit,
+    val  onSetImcDataAction: (
+        imcData: ImcData,
+        KktInfoModel: KktInfoModel,
+        isOnline: Boolean
+    ) -> Unit,
+    val onSetErrorAction: (
+        request: ErrorRequestModel,
+        KktInfoModel: KktInfoModel
+    ) -> Unit,
+    val onSetIsmNoticeAction: (
+        info: IsmNoticeInfoModel,
+        KktInfoModel: KktInfoModel
+    ) -> Unit,
+    val onSetRawEventAction: (
+        event: String
+    ) -> Unit,
+    val onSetReceiptInfoModelAction: (
+        info: ReceiptInfoModel,
+        KktInfoModel: KktInfoModel
+    ) -> Unit,
+    val onSetKktInfoModelAction: (
+        KktInfoModel: KktInfoModel
+    ) -> Unit,
+    val onSetCashierAction: (
+        CashierInfoModel: CashierInfoModel,
+        KktInfoModel: KktInfoModel
+    ) -> Unit
+)

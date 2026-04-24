@@ -12,12 +12,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
+import ru.atol.os.tspiot.driver.api.mapper.toJsonString
 import ru.esm.tspiot.data.mapper.mapToESMModel
 import ru.esm.tspiot.driver.api.IPiotManager
 import ru.esm.tspiot.driver.api.callback.IBoolCallback
 import ru.esm.tspiot.driver.api.callback.IResultCallback
 import ru.esm.tspiot.data.models.CashierInfoModel
 import ru.esm.tspiot.data.models.ErrorRequestModel
+import ru.esm.tspiot.data.models.ImcData
 import ru.esm.tspiot.data.models.IsmNoticeInfoModel
 import ru.esm.tspiot.data.models.KktInfoModel
 import ru.esm.tspiot.data.models.ReceiptInfoModel
@@ -83,11 +85,11 @@ class PiotESMManagerClientImpl @Inject constructor(
     }
 
 
-    override suspend fun setImcData(imcData: String, kktInfo: KktInfoModel, isOnline: Boolean) =
+    override suspend fun setImcData(imcData: ImcData, kktInfo: KktInfoModel, isOnline: Boolean) =
         executeUnitCallback { m, cb ->
             m.setImcData(
                 cb,
-                imcData,
+                imcData.toJsonString(),
                 kktInfo.mapToESMModel(),
                 isOnline
             )
