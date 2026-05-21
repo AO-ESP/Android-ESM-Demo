@@ -12,8 +12,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
-import ru.atol.os.tspiot.driver.api.mapper.toJsonString
 import ru.esm.tspiot.data.mapper.mapToESMModel
+import ru.esm.tspiot.data.mapper.toJsonString
 import ru.esm.tspiot.driver.api.IPiotManager
 import ru.esm.tspiot.driver.api.callback.IBoolCallback
 import ru.esm.tspiot.driver.api.callback.IResultCallback

@@ -1,8 +1,10 @@
 package ru.esm.tspiot.data.mapper
 
+import kotlinx.serialization.json.Json
 import ru.esm.tspiot.data.models.CashierInfoModel
 import ru.esm.tspiot.data.models.ErrorInfoModel
 import ru.esm.tspiot.data.models.ErrorRequestModel
+import ru.esm.tspiot.data.models.ImcData
 import ru.esm.tspiot.data.models.IsmNoticeInfoModel
 import ru.esm.tspiot.data.models.KktInfoModel
 import ru.esm.tspiot.data.models.ReceiptImcDataModel
@@ -80,4 +82,8 @@ fun ReceiptInfoModel.mapToESMModel(): ReceiptInfo {
             )
         },
     )
+}
+
+fun ImcData.toJsonString(): String {
+    return Json.encodeToString(this)
 }
