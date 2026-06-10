@@ -17,7 +17,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -26,7 +28,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import kotlinx.coroutines.launch
 import ru.atol.os.tspiot.presentation.ui.navigation.AppRoute
+import ru.esm.tspiot.ui.items.ResultDisplay
 import ru.esm.tspiot.ui.items.ServiceConnectCard
 import ru.esm.tspiot.ui.items.ServiceInfoCard
 import ru.esm.tspiot.ui.viewmodels.MainViewModel
@@ -39,6 +43,15 @@ fun MainScreen(
 ) {
     val context = LocalContext.current
     val isConnected by viewModel.isConnected.collectAsStateWithLifecycle()
+    val getInfoResult by viewModel.getInfoResult.collectAsStateWithLifecycle()
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(getInfoResult) {
+        coroutineScope.launch {
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -57,7 +70,7 @@ fun MainScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(scrollState),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -79,6 +92,17 @@ fun MainScreen(
             ) {
                 Text("Работа с ЛМ ЧЗ")
             }
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                enabled = isConnected,
+                onClick = {
+                    viewModel.getInfo()
+
+                }
+            ) {
+                Text("GET INFO")
+            }
+            ResultDisplay(getInfoResult)
         }
     }
 }

@@ -9,4 +9,5 @@ interface IEsmService {
     void cisSell(in IBundleResultCallback callback, in List<String> cisList);
     void cisReturn(in IBundleResultCallback callback, in List<String> cisList);
     void cisSold(in IBundleResultCallback callback, int skip, int limit);
+    void getInfo(in IBundleResultCallback callback);
 }

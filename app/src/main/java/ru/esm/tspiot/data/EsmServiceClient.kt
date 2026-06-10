@@ -82,7 +82,7 @@ class EsmServiceClient @Inject constructor(private val context: Context) {
     /**
      * Проверяет активность сервиса через вызов getAidlVersion().
      */
-    suspend fun ping(): Boolean {
+    fun ping(): Boolean {
         return when (getAidlVersion()) {
             is EsmResult.Success -> true
             else -> false
@@ -92,7 +92,7 @@ class EsmServiceClient @Inject constructor(private val context: Context) {
     /**
      * Получает версию AIDL интерфейса.
      */
-    suspend fun getAidlVersion(): EsmResult<Int> {
+    fun getAidlVersion(): EsmResult<Int> {
         val manager = synchronized(lock) { esmService }
         return manager?.runCatching {
             getAidlVersion()
@@ -113,6 +113,9 @@ class EsmServiceClient @Inject constructor(private val context: Context) {
 
     suspend fun cisSold(skip: Int, limit: Int) =
         executeCallback<Bundle> { m, cb -> m.cisSold(cb, skip, limit) }
+
+    suspend fun getInfo() =
+        executeCallback<Bundle> { m, cb -> m.getInfo(cb) }
 
     /**
      * Универсальный метод для колбэк-ориентированных вызовов.
