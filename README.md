@@ -19,7 +19,7 @@
 
 ## IEsmService
 
-### Описание методов
+### Описание методов (версия 2)
 
 `getAidlVersion()` - версия интерфейса
 
@@ -34,6 +34,9 @@
 
 `cisSold(in IBundleResultCallback callback, int skip, int limit)` - получение списка проданных
 товаров из ЛМ ЧЗ
+
+#### Добавлен метод (версия 3, ЕСМ v1.4.2)
+`getInfo(in IBundleResultCallback callback)` - получение информации о ЕСМ, ККТ, ЛМ ЧЗ
 
 ### Подключение к сервису
 
