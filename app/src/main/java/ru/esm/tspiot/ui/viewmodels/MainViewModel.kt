@@ -103,6 +103,6 @@ class MainViewModel @Inject constructor(
         private const val TAG = "MainViewModel"
         private const val ESM_SERVICE_ACTION = "ru.esp.esm.action.ACTION_ESM_SERVICE"
         private const val ATOL_PACKAGE = "ru.atol.os.tspiot"
-        private const val OTHER_PACKAGE = "ru.esp.tspiot"
+        private const val OTHER_PACKAGE = "ru.esm.tspiot"
     }
 }

@@ -44,7 +44,7 @@
 val ESM_SERVICE_ACTION = "ru.esp.esm.action.ACTION_ESM_SERVICE"
 
 val PACKAGE = "ru.atol.os.tspiot" // для терминалов Атол
-val PACKAGE = "ru.esp.tspiot" // для остальных терминалов
+val PACKAGE = "ru.esm.tspiot" // для остальных терминалов
 
 val intent = Intent(ESM_SERVICE_ACTION).apply {setPackage(PACKAGE)}
 
