@@ -79,6 +79,9 @@ class EsmServiceClient @Inject constructor(private val context: Context) {
     suspend fun codesCheck(codes: CodesCheckRequest) =
         executeCallback<Bundle> { m, cb -> m.codesCheck(cb, codes) }
 
+    suspend fun eansCheck(eans: List<String>) =
+        executeCallback<Bundle> { m, cb -> m.eanCheck(cb, eans) }
+
     /**
      * Проверяет активность сервиса через вызов getAidlVersion().
      */

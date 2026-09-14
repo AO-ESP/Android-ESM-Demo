@@ -88,6 +88,13 @@ fun MainScreen(
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = isConnected,
+                onClick = { navController.navigate(AppRoute.EansCheckScreenRoute.id) }
+            ) {
+                Text("Проверка EAN")
+            }
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                enabled = isConnected,
                 onClick = { navController.navigate(AppRoute.LmScreenRoute.id) }
             ) {
                 Text("Работа с ЛМ ЧЗ")

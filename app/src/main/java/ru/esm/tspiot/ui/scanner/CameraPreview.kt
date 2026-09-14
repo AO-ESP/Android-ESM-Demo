@@ -25,6 +25,7 @@ import java.util.concurrent.Executors
 @SuppressLint("UnsafeOptInUsageError", "RestrictedApi")
 @Composable
 fun CameraPreview(
+    options: BarcodeScannerOptions,
     onBarcodeScanned: (String, String) -> Unit,
     onError: (String) -> Unit
 ) {
@@ -51,14 +52,6 @@ fun CameraPreview(
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build()
 
-                    val options = BarcodeScannerOptions.Builder()
-                        .setBarcodeFormats(
-                            Barcode.FORMAT_DATA_MATRIX,
-                            Barcode.FORMAT_EAN_13,
-                            Barcode.FORMAT_EAN_8
-                        )
-                        .build()
-
                     val scanner = BarcodeScanning.getClient(options)
 
                     imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
@@ -75,6 +68,7 @@ fun CameraPreview(
                                         barcode.rawValue?.let { rawValue ->
                                             val format = when (barcode.format) {
                                                 Barcode.FORMAT_DATA_MATRIX -> "DATA MATRIX"
+                                                Barcode.FORMAT_ITF -> "ITF"
                                                 Barcode.FORMAT_EAN_13 -> "EAN-13"
                                                 Barcode.FORMAT_EAN_8 -> "EAN-8"
                                                 else -> "Unknown"

@@ -36,7 +36,7 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import ru.esm.tspiot.domain.ScanResult
 
 @Composable
-fun ScannerScreen(
+fun EanScannerScreen(
     navController: NavHostController,
     viewModel: ScannerViewModel = hiltViewModel()
 ) {
@@ -47,7 +47,6 @@ fun ScannerScreen(
         CameraPreview(
             options = BarcodeScannerOptions.Builder()
                 .setBarcodeFormats(
-                    Barcode.FORMAT_DATA_MATRIX,
                     Barcode.FORMAT_ITF,
                     Barcode.FORMAT_EAN_13,
                     Barcode.FORMAT_EAN_8

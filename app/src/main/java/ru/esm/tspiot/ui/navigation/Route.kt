@@ -16,6 +16,10 @@ data object AppRoute : Route() {
         override val id: String = "codes_check"
         override val title = "Проверка КИ"
     }
+    data object EansCheckScreenRoute : Route() {
+        override val id: String = "eans_check"
+        override val title = "Проверка штрих-кодов"
+    }
 
     data object LmScreenRoute : Route() {
         override val id: String = "lm"
@@ -25,6 +29,11 @@ data object AppRoute : Route() {
     data object ScannerScreenRoute : Route() {
         override val id: String = "scanner"
         override val title = "Сканер"
+    }
+
+    data object EanScannerScreenRoute : Route() {
+        override val id: String = "ean_scanner"
+        override val title = "Сканер штрих-кодов"
     }
 
     data object PermissionScreenRoute : Route() {

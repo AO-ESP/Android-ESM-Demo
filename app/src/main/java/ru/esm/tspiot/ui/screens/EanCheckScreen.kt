@@ -34,14 +34,13 @@ import ru.esm.tspiot.domain.ScanResult
 import ru.esm.tspiot.ui.items.MethodSection
 import ru.esm.tspiot.ui.items.NumberInputField
 import ru.esm.tspiot.ui.items.ScannedMarks
-import ru.esm.tspiot.ui.viewmodels.CodesCheckViewModel
-import ru.esp.esm.api.model.Cis
+import ru.esm.tspiot.ui.viewmodels.EanCheckViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
-fun CodesCheckScreen(
+fun EanCheckScreen(
     navController: NavHostController,
-    viewModel: CodesCheckViewModel = hiltViewModel()
+    viewModel: EanCheckViewModel = hiltViewModel()
 ) {
     val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
     var scanResult by rememberSaveable { mutableStateOf<Set<ScanResult>?>(null) }
@@ -97,7 +96,7 @@ fun CodesCheckScreen(
                             savedStateHandle?.remove<Set<ScanResult>?>("scanResult")
                             scanResult = null
                             viewModel.clearCheckResult()
-                            navController.navigate(AppRoute.ScannerScreenRoute.id) {
+                            navController.navigate(AppRoute.EanScannerScreenRoute.id) {
                                 popUpTo(AppRoute.CodesCheckScreenRoute.id) {
                                     inclusive = false
                                 }
@@ -114,7 +113,7 @@ fun CodesCheckScreen(
                         .padding(16.dp)
                         .fillMaxWidth()
                 ) {
-                    Text("Сканировать марку или EAN")
+                    Text("Сканировать EAN")
                 }
             }
             item {
@@ -140,10 +139,7 @@ fun CodesCheckScreen(
                     MethodSection(
                         title = "Метод codesCheck (AIDL version 2)",
                         onClick = {
-                            viewModel.codesCheck(
-                                codes = results.map { Cis(it.text, pg) },
-                                tz = tz
-                            )
+                            viewModel.eansCheck(codes = results.map { it.text })
                         },
                         result = checkResult
                     )

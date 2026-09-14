@@ -6,6 +6,7 @@ import ru.esp.esm.api.model.CodesCheckRequest;
 interface IEsmService {
     int getAidlVersion();
     void codesCheck(in IBundleResultCallback callback, in CodesCheckRequest codes);
+    void eanCheck(in IBundleResultCallback callback, in List<String> eanList);
     void cisSell(in IBundleResultCallback callback, in List<String> cisList);
     void cisReturn(in IBundleResultCallback callback, in List<String> cisList);
     void cisSold(in IBundleResultCallback callback, int skip, int limit);
