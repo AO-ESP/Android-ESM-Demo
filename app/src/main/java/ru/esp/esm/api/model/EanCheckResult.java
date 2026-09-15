@@ -17,26 +17,26 @@ public final class EanCheckResult implements Parcelable {
     @Nullable
     private final Boolean found;
     @Nullable
-    private final Boolean blocked;
+    private final Boolean EANblocked;
     @Nullable
     private final Integer pg;
 
     public EanCheckResult(
             @NonNull String ean,
             @Nullable Boolean found,
-            @Nullable Boolean blocked,
+            @Nullable Boolean EANblocked,
             @Nullable Integer pg
     ) {
         this.ean = ean;
         this.found = found;
-        this.blocked = blocked;
+        this.EANblocked = EANblocked;
         this.pg = pg;
     }
 
     private EanCheckResult(Parcel in) {
         ean = Objects.requireNonNull(in.readString());
         found = in.readByte() == 0 ? null : in.readByte() != 0;
-        blocked = in.readByte() == 0 ? null : in.readByte() != 0;
+        EANblocked = in.readByte() == 0 ? null : in.readByte() != 0;
         pg = in.readByte() == 0 ? null : in.readInt();
     }
 
@@ -44,7 +44,7 @@ public final class EanCheckResult implements Parcelable {
     public void writeToParcel(@NonNull Parcel dest, int flags) {
         dest.writeString(ean);
         writeNullableBoolean(dest, found);
-        writeNullableBoolean(dest, blocked);
+        writeNullableBoolean(dest, EANblocked);
         if (pg == null) {
             dest.writeByte((byte) 0);
         } else {
@@ -90,8 +90,8 @@ public final class EanCheckResult implements Parcelable {
     }
 
     @Nullable
-    public Boolean getBlocked() {
-        return blocked;
+    public Boolean getEANblocked() {
+        return EANblocked;
     }
 
     @Nullable
@@ -105,7 +105,7 @@ public final class EanCheckResult implements Parcelable {
         return "EanCheckResult{" +
                 "ean='" + ean + '\'' +
                 ", found=" + found +
-                ", blocked=" + blocked +
+                ", EANblocked=" + EANblocked +
                 ", pg=" + pg +
                 '}';
     }
