@@ -24,7 +24,7 @@
 `getAidlVersion()` - версия интерфейса
 
 `codesCheck(in IBundleResultCallback callback, in CodesCheckRequest codes)` - проверка КИ в ГИС МТ и
-ЛМ ЧЗ
+ЛМ ЧЗ + Проверка EAN/GTIN
 
 `cisSell(in IBundleResultCallback callback, in List<String> cisList)` - регистрация продажи товаров
 в ЛМ ЧЗ
@@ -38,8 +38,10 @@
 #### Добавлен метод (версия 3, ЕСМ v1.4.2)
 `getInfo(in IBundleResultCallback callback)` - получение информации о ЕСМ, ККТ, ЛМ ЧЗ
 
-#### Добавлен метод (версия 4, ЕСМ v1.4.#) // TODO Актуализировать версию, когда будет реализована данная функциональность в ЕСМ
+#### Добавлен метод и изменен CodesCheckResponse (версия 4, ЕСМ v1.4.#) // TODO Актуализировать версию
 `eanCheck(in IBundleResultCallback callback, in List<String> eanList)` - проверка EAN в ЛМ ЧЗ
+
+В CodesCheckResponse добавлен параметр `private final List<EanCheckResult> eans`
 
 ### Подключение к сервису
 
