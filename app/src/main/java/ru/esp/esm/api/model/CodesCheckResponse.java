@@ -2,25 +2,24 @@ package ru.esp.esm.api.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 @Keep
 public final class CodesCheckResponse implements Parcelable {
-    private static final String TAG = "CodesCheckResponse";
     private final int code;
 
     @NonNull
     private final String description;
     @NonNull
     private final List<MarkingCodeInfo> codes;
-
     @NonNull
     private final String reqId;
 
@@ -33,6 +32,30 @@ public final class CodesCheckResponse implements Parcelable {
 
     @Nullable
     private final String version;
+    @NonNull
+    private final List<EanCheckResult> eans;
+
+    public CodesCheckResponse(
+            int code,
+            @NonNull String description,
+            @NonNull List<MarkingCodeInfo> codes,
+            @NonNull String reqId,
+            long reqTimestamp,
+            boolean isCheckedOffline,
+            @Nullable String inst,
+            @Nullable String version,
+            @NonNull List<EanCheckResult> eans
+    ) {
+        this.code = code;
+        this.description = description;
+        this.codes = codes;
+        this.reqId = reqId;
+        this.reqTimestamp = reqTimestamp;
+        this.isCheckedOffline = isCheckedOffline;
+        this.inst = inst;
+        this.version = version;
+        this.eans = new ArrayList<>(eans);
+    }
 
     public CodesCheckResponse(
             int code,
@@ -44,14 +67,7 @@ public final class CodesCheckResponse implements Parcelable {
             @Nullable String inst,
             @Nullable String version
     ) {
-        this.code = code;
-        this.description = description;
-        this.codes = codes;
-        this.reqId = reqId;
-        this.reqTimestamp = reqTimestamp;
-        this.isCheckedOffline = isCheckedOffline;
-        this.inst = inst;
-        this.version = version;
+        this(code, description, codes, reqId, reqTimestamp, isCheckedOffline, inst, version, Collections.emptyList());
     }
 
     public CodesCheckResponse(
@@ -62,14 +78,7 @@ public final class CodesCheckResponse implements Parcelable {
             long reqTimestamp,
             boolean isCheckedOffline
     ) {
-        this.code = code;
-        this.description = description;
-        this.codes = codes;
-        this.reqId = reqId;
-        this.reqTimestamp = reqTimestamp;
-        this.isCheckedOffline = isCheckedOffline;
-        this.inst = null;
-        this.version = null;
+        this(code, description, codes, reqId, reqTimestamp, isCheckedOffline, null, null, Collections.emptyList());
     }
 
     CodesCheckResponse(Parcel in) {
@@ -81,6 +90,8 @@ public final class CodesCheckResponse implements Parcelable {
         isCheckedOffline = in.readByte() != 0;
         inst = in.readByte() == 0 ? null : in.readString();
         version = in.readByte() == 0 ? null : in.readString();
+        List<EanCheckResult> parcelEans = in.createTypedArrayList(EanCheckResult.CREATOR);
+        eans = parcelEans != null ? parcelEans : Collections.emptyList();
     }
 
     @Override
@@ -99,6 +110,7 @@ public final class CodesCheckResponse implements Parcelable {
         if (version != null) {
             dest.writeString(version);
         }
+        dest.writeTypedList(eans);
     }
 
     @Override
@@ -109,12 +121,7 @@ public final class CodesCheckResponse implements Parcelable {
     public static final Creator<CodesCheckResponse> CREATOR = new Creator<>() {
         @Override
         public CodesCheckResponse createFromParcel(Parcel in) {
-            try {
-                return new CodesCheckResponse(in);
-            } catch (Exception e) {
-                Log.e(TAG, "Error unparceling CodesCheckResponse", e);
-                throw new IllegalStateException("Failed to create CodesCheckResponse from Parcel", e);
-            }
+            return new CodesCheckResponse(in);
         }
 
         @Override
@@ -160,6 +167,11 @@ public final class CodesCheckResponse implements Parcelable {
         return version;
     }
 
+    @NonNull
+    public List<EanCheckResult> getEans() {
+        return eans;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -167,12 +179,13 @@ public final class CodesCheckResponse implements Parcelable {
         return code == that.code && reqTimestamp == that.reqTimestamp &&
                 Objects.equals(description, that.description) && isCheckedOffline == that.isCheckedOffline &&
                 Objects.equals(codes, that.codes) && Objects.equals(reqId, that.reqId) &&
-                Objects.equals(inst, that.inst) && Objects.equals(version, that.version);
+                Objects.equals(inst, that.inst) && Objects.equals(version, that.version) &&
+                Objects.equals(eans, that.eans);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(code, description, codes, reqId, reqTimestamp, isCheckedOffline, inst, version);
+        return Objects.hash(code, description, codes, reqId, reqTimestamp, isCheckedOffline, inst, version, eans);
     }
 
     @NonNull
@@ -187,6 +200,7 @@ public final class CodesCheckResponse implements Parcelable {
                 ", isCheckedOffline=" + isCheckedOffline +
                 ", inst='" + inst + '\'' +
                 ", version='" + version + '\'' +
+                ", eans=" + eans +
                 '}';
     }
 }

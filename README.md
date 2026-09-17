@@ -38,6 +38,9 @@
 #### Добавлен метод (версия 3, ЕСМ v1.4.2)
 `getInfo(in IBundleResultCallback callback)` - получение информации о ЕСМ, ККТ, ЛМ ЧЗ
 
+#### Добавлен метод (версия 4, ЕСМ v1.4.#) // TODO Актуализировать версию, когда будет реализована данная функциональность в ЕСМ
+`eanCheck(in IBundleResultCallback callback, in List<String> eanList)` - проверка EAN в ЛМ ЧЗ
+
 ### Подключение к сервису
 
 ```
