@@ -22,6 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -29,19 +30,58 @@ import androidx.navigation.NavHostController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import ru.atol.os.tspiot.presentation.ui.navigation.AppRoute
+import ru.esm.tspiot.domain.EsmResult
+import ru.esm.tspiot.ui.navigation.AppRoute
 import ru.esm.tspiot.domain.ScanResult
 import ru.esm.tspiot.ui.items.MethodSection
 import ru.esm.tspiot.ui.items.NumberInputField
 import ru.esm.tspiot.ui.items.ScannedMarks
+import ru.esm.tspiot.ui.navigation.LocalNavController
+import ru.esm.tspiot.ui.navigation.createPreviewNavController
 import ru.esm.tspiot.ui.viewmodels.CodesCheckViewModel
 import ru.esp.esm.api.model.Cis
+
+@Preview
+@Composable
+fun CodesCheckScreenPreview() {
+
+    CodesCheckScreenContent(
+        navController = createPreviewNavController(),
+        checkResult = EsmResult.Success("data"),
+        onClearCheckResultAction = {   },
+        onCodeChecksAction = { _, _, _ -> }
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun CodesCheckScreen(
-    navController: NavHostController,
+    navController: NavHostController = LocalNavController.current,
     viewModel: CodesCheckViewModel = hiltViewModel()
+) {
+
+    val checkResult by viewModel.checkResult.collectAsStateWithLifecycle()
+
+    CodesCheckScreenContent(
+        navController = navController,
+        checkResult = checkResult,
+        onClearCheckResultAction = {  viewModel.clearCheckResult() },
+        onCodeChecksAction = { results: Set<ScanResult>, pg: Int?, tz: Int? ->
+            viewModel.codesCheck(
+                codes = results.map { Cis(it.text, pg) },
+                tz = tz
+            )
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+@Composable
+fun CodesCheckScreenContent(
+    navController: NavHostController = LocalNavController.current,
+    checkResult: EsmResult<String>?,
+    onClearCheckResultAction: () -> Unit,
+    onCodeChecksAction: (Set<ScanResult>, Int?, Int?) -> Unit
 ) {
     val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
     var scanResult by rememberSaveable { mutableStateOf<Set<ScanResult>?>(null) }
@@ -68,7 +108,6 @@ fun CodesCheckScreen(
         }
     }
 
-    val checkResult by viewModel.checkResult.collectAsStateWithLifecycle()
     Log.d("CodesCheckScreen", scanResult.toString())
 
     Scaffold(
@@ -96,7 +135,7 @@ fun CodesCheckScreen(
                         if (cameraPermissionState.status.isGranted) {
                             savedStateHandle?.remove<Set<ScanResult>?>("scanResult")
                             scanResult = null
-                            viewModel.clearCheckResult()
+                            onClearCheckResultAction()
                             navController.navigate(AppRoute.ScannerScreenRoute.id) {
                                 popUpTo(AppRoute.CodesCheckScreenRoute.id) {
                                     inclusive = false
@@ -140,9 +179,10 @@ fun CodesCheckScreen(
                     MethodSection(
                         title = "Метод codesCheck (AIDL version 2)",
                         onClick = {
-                            viewModel.codesCheck(
-                                codes = results.map { Cis(it.text, pg) },
-                                tz = tz
+                            onCodeChecksAction(
+                                results,
+                                pg,
+                                tz
                             )
                         },
                         result = checkResult

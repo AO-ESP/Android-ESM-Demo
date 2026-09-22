@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,19 +31,73 @@ import androidx.navigation.NavHostController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import ru.atol.os.tspiot.presentation.ui.navigation.AppRoute
+import ru.esm.tspiot.domain.EsmResult
+import ru.esm.tspiot.ui.navigation.AppRoute
 import ru.esm.tspiot.domain.ScanResult
 import ru.esm.tspiot.ui.items.MethodSection
 import ru.esm.tspiot.ui.items.NumberInputField
 import ru.esm.tspiot.ui.items.ScannedMarks
+import ru.esm.tspiot.ui.navigation.LocalNavController
+import ru.esm.tspiot.ui.navigation.createPreviewNavController
 import ru.esm.tspiot.ui.viewmodels.LmViewModel
+
+@Preview
+@Composable
+fun LmScreenPreview() {
+
+    LmScreenContent(
+        navController = createPreviewNavController(),
+        cisSellResult = EsmResult.Success(data = "data"),
+        cisReturnResult = EsmResult.Success(data = "data"),
+        cisSoldResult = EsmResult.Success(data = "data"),
+        onScanResultCISSellAction = { },
+        onScanResultCISReturnAction = { },
+        onScanResultCISSoldAction = { _, _ -> }
+    )
+}
+
+@Composable
+fun LmScreen(
+    navController: NavHostController = LocalNavController.current,
+    viewModel: LmViewModel = hiltViewModel()
+) {
+    val cisSellResult by viewModel.cisSellResult.collectAsStateWithLifecycle()
+    val cisReturnResult by viewModel.cisReturnResult.collectAsStateWithLifecycle()
+    val cisSoldResult by viewModel.cisSoldResult.collectAsStateWithLifecycle()
+
+    val onScanResultCISSellAction = { results: Set<ScanResult> ->
+        viewModel.cisSell(results.map { it.text })
+    }
+
+    val onScanResultCISReturnAction = { results: Set<ScanResult> ->
+        viewModel.cisReturn(results.map { it.text })
+    }
+
+    val onScanResultCISSoldAction = { skip: Int, limit: Int ->
+        viewModel.cisSold(skip, limit)
+    }
+
+    LmScreenContent(
+        navController,
+        cisSellResult,
+        cisReturnResult,
+        cisSoldResult,
+        onScanResultCISSellAction,
+        onScanResultCISReturnAction,
+        onScanResultCISSoldAction,
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
-fun LmScreen(
+fun LmScreenContent(
     navController: NavHostController,
-    viewModel: LmViewModel = hiltViewModel()
-
+    cisSellResult: EsmResult<String>?,
+    cisReturnResult: EsmResult<String>?,
+    cisSoldResult: EsmResult<String>?,
+    onScanResultCISSellAction: (Set<ScanResult>) -> Unit,
+    onScanResultCISReturnAction: (Set<ScanResult>) -> Unit,
+    onScanResultCISSoldAction: (Int, Int) -> Unit,
 ) {
     val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
     var scanResult by rememberSaveable { mutableStateOf<Set<ScanResult>?>(null) }
@@ -68,10 +123,6 @@ fun LmScreen(
 
     var skip by rememberSaveable { mutableIntStateOf(0) }
     var limit by rememberSaveable { mutableIntStateOf(100) }
-
-    val cisSellResult by viewModel.cisSellResult.collectAsStateWithLifecycle()
-    val cisReturnResult by viewModel.cisReturnResult.collectAsStateWithLifecycle()
-    val cisSoldResult by viewModel.cisSoldResult.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -128,7 +179,7 @@ fun LmScreen(
                     ) {
                         MethodSection(
                             title = "CIS Sell",
-                            onClick = { viewModel.cisSell(results.map { it.text }) },
+                            onClick = { onScanResultCISSellAction(results) },
                             result = cisSellResult
                         )
                     }
@@ -143,7 +194,7 @@ fun LmScreen(
                     ) {
                         MethodSection(
                             title = "CIS Return",
-                            onClick = { viewModel.cisReturn(results.map { it.text }) },
+                            onClick = { onScanResultCISReturnAction(results) },
                             result = cisReturnResult
                         )
                     }
@@ -168,7 +219,7 @@ fun LmScreen(
                     )
                     MethodSection(
                         title = "CIS Sold (skip=0, limit=10)",
-                        onClick = { viewModel.cisSold(skip, limit) },
+                        onClick = { onScanResultCISSoldAction(skip, limit) },
                         result = cisSoldResult
                     )
                 }

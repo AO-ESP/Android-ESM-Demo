@@ -17,6 +17,13 @@
 
 *Примечание: Имя пакета для подключения зависит от вендора (Атол, MSPos, др.)*
 
+## IPiotManager.eanCheck
+
+Проверка EAN/GTIN. Отдельные инструкции по flavor:
+
+- [flavor atol (терминалы Атол)](docs/ean-check-atol.md)
+- [flavor mspos (остальные терминалы)](docs/ean-check-mspos.md)
+
 ## IEsmService
 
 ### Описание методов
@@ -47,3 +54,6 @@ val intent = Intent(ESM_SERVICE_ACTION).apply {setPackage(PACKAGE)}
 
 context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
 ```
+
+## Особенность сборки
+Для сборки ATOL/Все остальные нужно переключить имплементацию интерфейса PiotManagerClient в AppModule
