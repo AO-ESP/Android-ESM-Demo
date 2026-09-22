@@ -17,6 +17,13 @@
 
 *Примечание: Имя пакета для подключения зависит от вендора (Атол, MSPos, др.)*
 
+## IPiotManager.eanCheck
+
+Проверка EAN/GTIN. Отдельные инструкции по flavor:
+
+- [flavor atol (терминалы Атол)](docs/ean-check-atol.md)
+- [flavor mspos (остальные терминалы)](docs/ean-check-mspos.md)
+
 ## IEsmService
 
 ### Описание методов

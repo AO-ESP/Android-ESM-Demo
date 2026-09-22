@@ -4,6 +4,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.os.Build
+import android.os.Bundle
 import android.os.IBinder
 import android.os.RemoteException
 import android.util.Log
@@ -12,18 +14,23 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
-import ru.atol.os.tspiot.driver.api.mapper.toJsonString
 import ru.esm.tspiot.data.mapper.mapToESMModel
-import ru.esm.tspiot.driver.api.IPiotManager
-import ru.esm.tspiot.driver.api.callback.IBoolCallback
-import ru.esm.tspiot.driver.api.callback.IResultCallback
+import ru.esm.tspiot.data.mapper.toJsonString
 import ru.esm.tspiot.data.models.CashierInfoModel
 import ru.esm.tspiot.data.models.ErrorRequestModel
 import ru.esm.tspiot.data.models.ImcData
 import ru.esm.tspiot.data.models.IsmNoticeInfoModel
 import ru.esm.tspiot.data.models.KktInfoModel
 import ru.esm.tspiot.data.models.ReceiptInfoModel
+import ru.esm.tspiot.domain.PiotResult
+import ru.esm.tspiot.driver.api.IPiotManager
+import ru.esm.tspiot.driver.api.callback.IBoolCallback
+import ru.esm.tspiot.driver.api.callback.IBundleResultCallback
+import ru.esm.tspiot.driver.api.callback.IResultCallback
+import ru.esm.tspiot.driver.api.model.ean.EanCheckRequest
+import ru.esm.tspiot.driver.api.model.ean.EanCheckResponse
 import javax.inject.Inject
+import kotlin.coroutines.resume
 
 class PiotESMManagerClientImpl @Inject constructor(
     @param:ApplicationContext val context: Context
@@ -137,6 +144,16 @@ class PiotESMManagerClientImpl @Inject constructor(
             )
         }
 
+    override suspend fun eanCheck(request: EanCheckRequest): PiotResult<EanCheckResponse> {
+        val result = executeBundleCallback { m, cb -> m.eanCheck(cb, request) }
+        return when (result) {
+            is PiotResult.Success -> parseEanCheckResponse(result.data)
+            is PiotResult.Error -> result
+            PiotResult.Loading -> PiotResult.Loading
+            PiotResult.ServiceUnavailable -> PiotResult.ServiceUnavailable
+        }
+    }
+
     /**
      * Универсальный метод для колбэк-ориентированных вызовов.
      */
@@ -190,7 +207,55 @@ class PiotESMManagerClientImpl @Inject constructor(
         }
     }
 
+    private suspend fun executeBundleCallback(
+        action: (IPiotManager, IBundleResultCallback) -> Unit
+    ): PiotResult<Bundle> {
+        val manager = synchronized(lock) { iPiotManager }
+        if (manager == null) return PiotResult.ServiceUnavailable
+
+        return suspendCancellableCoroutine { continuation ->
+            val callback = object : IBundleResultCallback.Stub() {
+                override fun onSuccess(bundle: Bundle) {
+                    bundle.classLoader = EanCheckResponse::class.java.classLoader
+                    if (continuation.isActive) {
+                        continuation.resume(PiotResult.Success(bundle))
+                    }
+                }
+
+                override fun onError(code: Int, message: String?) {
+                    if (continuation.isActive) {
+                        continuation.resume(PiotResult.Error(code, message))
+                    }
+                }
+            }
+
+            try {
+                action(manager, callback)
+            } catch (e: RemoteException) {
+                if (continuation.isActive) {
+                    continuation.resume(PiotResult.Error(-1, e.message))
+                }
+            }
+        }
+    }
+
+    private fun parseEanCheckResponse(bundle: Bundle): PiotResult<EanCheckResponse> {
+        bundle.classLoader = EanCheckResponse::class.java.classLoader
+        val response = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            bundle.getParcelable(BUNDLE_KEY, EanCheckResponse::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            bundle.getParcelable(BUNDLE_KEY)
+        }
+        return if (response != null) {
+            PiotResult.Success(response)
+        } else {
+            PiotResult.Error(-3, "Empty EanCheckResponse")
+        }
+    }
+
     companion object {
         private val TAG = PiotESMManagerClientImpl::class.simpleName
+        private const val BUNDLE_KEY = "key"
     }
 }

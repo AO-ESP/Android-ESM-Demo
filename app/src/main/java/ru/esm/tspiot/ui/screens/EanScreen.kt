@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,70 +17,72 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import ru.esm.tspiot.domain.PiotResult
+import ru.esm.tspiot.ui.items.ResultDisplay
 import ru.esm.tspiot.ui.navigation.AppRoute
 import ru.esm.tspiot.ui.navigation.LocalNavController
 import ru.esm.tspiot.ui.navigation.createPreviewNavController
-import ru.esm.tspiot.ui.viewmodels.MainViewModel
+import ru.esm.tspiot.ui.viewmodels.EanViewModel
+import ru.esm.tspiot.driver.api.model.ean.EanCheckItem
+import ru.esm.tspiot.driver.api.model.ean.EanCheckRequest
 
 @Preview
 @Composable
-fun MainScreenPreview() {
-    MainScreenContent(
+fun EanScreenPreview() {
+    EanScreenContent(
         navController = createPreviewNavController(),
-        {},
-        {},
-        "ServicePackage"
+        isConnected = true,
+        eanCheckResult = null,
+        onConnect = {},
+        onDisconnect = {},
+        onEanCheck = {},
     )
 }
 
 @Composable
-fun MainScreen(
+fun EanScreen(
     navController: NavHostController = LocalNavController.current,
-    viewModel: MainViewModel = hiltViewModel(),
+    viewModel: EanViewModel = hiltViewModel(),
 ) {
-    val servicePackage = viewModel.getServicePackage()
+    val isConnected by viewModel.isPiotManagerConnected.collectAsStateWithLifecycle()
+    val eanCheckResult by viewModel.eanCheckResult.collectAsStateWithLifecycle()
 
-    MainScreenContent(
-        navController,
-        onConnect = { viewModel.connectToESMService() },
-        onDisconnect = { viewModel.disconnectFromESMService() },
-        servicePackage
+    EanScreenContent(
+        navController = navController,
+        isConnected = isConnected,
+        eanCheckResult = eanCheckResult,
+        onConnect = { viewModel.connectToPiotManager() },
+        onDisconnect = { viewModel.disconnectFromPiotManager() },
+        onEanCheck = { viewModel.eanCheck(it) },
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreenContent(
+fun EanScreenContent(
     navController: NavHostController,
+    isConnected: Boolean,
+    eanCheckResult: PiotResult<String>?,
     onConnect: () -> Unit,
     onDisconnect: () -> Unit,
-    servicePackage: String
+    onEanCheck: (EanCheckRequest) -> Unit,
 ) {
-    val context = LocalContext.current
-
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("ESM Demo") },
+                title = { Text("EAN") },
                 navigationIcon = {
                     IconButton(
-                        onClick = { (context as? android.app.Activity)?.finish() },
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Default.ExitToApp,
-                            contentDescription  = "Выход",
-                            modifier = Modifier.rotate(180f)
-                        )
-                    }
+                        onClick = { navController.navigate(AppRoute.id) }
+                    ) { Icon(Icons.AutoMirrored.Default.ArrowBack, null) }
                 }
             )
         }
@@ -94,25 +96,35 @@ fun MainScreenContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { navController.navigate(AppRoute.MainScanScreenRoute.id) }
+                onClick = onConnect
             ) {
-                Text("Работа с марками")
+                Text("Подключиться")
             }
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { navController.navigate(AppRoute.MainPiotScreenRoute.id) }
+                onClick = onDisconnect
             ) {
-                Text("Работа с событиями")
+                Text("Отключиться")
             }
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { navController.navigate(AppRoute.EanScreenRoute.id) }
+                enabled = isConnected,
+                onClick = {
+                    onEanCheck(
+                        EanCheckRequest(
+                            listOf(
+                                EanCheckItem("1", "4690228020056"),
+                                EanCheckItem("3", "4600682003847"),
+                            )
+                        )
+                    )
+                }
             ) {
-                Text("Работа с EAN")
+                Text("EAN Check")
             }
+            ResultDisplay(eanCheckResult)
         }
     }
 }

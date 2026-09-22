@@ -6,15 +6,18 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import ru.esm.tspiot.data.EsmServiceClient
+import ru.esm.tspiot.data.PiotESMManagerClientImpl
+import ru.esm.tspiot.data.PiotManagerClient
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object AppModule {
+object PiotClientModule {
     @Provides
     @Singleton
-    fun provideEsmServiceClient(@ApplicationContext context: Context): EsmServiceClient {
-        return EsmServiceClient(context)
+    fun providePiotManagerClient(
+        @ApplicationContext context: Context
+    ): PiotManagerClient {
+        return PiotESMManagerClientImpl(context)
     }
 }

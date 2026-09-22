@@ -20,6 +20,11 @@ data object AppRoute : Route() {
         override val title = "ПИоТ ПМСР"
     }
 
+    data object EanScreenRoute : Route() {
+        override val id: String = "ean_screen"
+        override val title = "EAN"
+    }
+
     data object CodesCheckScreenRoute : Route() {
         override val id: String = "codes_check"
         override val title = "Проверка КИ"

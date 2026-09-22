@@ -13,6 +13,7 @@ import androidx.navigation.compose.composable
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import ru.esm.tspiot.ui.scanner.ScannerScreen
 import ru.esm.tspiot.ui.screens.CodesCheckScreen
+import ru.esm.tspiot.ui.screens.EanScreen
 import ru.esm.tspiot.ui.screens.LmScreen
 import ru.esm.tspiot.ui.screens.MainScanScreen
 import ru.esm.tspiot.ui.screens.MainScreen
@@ -43,6 +44,7 @@ private fun NavGraphBuilder.initNavigation() {
     composable(AppRoute.id) { MainScreen() }
     composable(AppRoute.MainScanScreenRoute.id) { MainScanScreen() }
     composable(AppRoute.MainPiotScreenRoute.id) { PiotScreen() }
+    composable(AppRoute.EanScreenRoute.id) { EanScreen() }
     composable(AppRoute.CodesCheckScreenRoute.id) { CodesCheckScreen() }
     composable(AppRoute.LmScreenRoute.id) { LmScreen() }
     composable(AppRoute.ScannerScreenRoute.id) { ScannerScreen() }

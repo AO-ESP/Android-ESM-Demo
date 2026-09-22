@@ -10,6 +10,9 @@ import ru.esm.tspiot.data.models.ImcData
 import ru.esm.tspiot.data.models.IsmNoticeInfoModel
 import ru.esm.tspiot.data.models.KktInfoModel
 import ru.esm.tspiot.data.models.ReceiptInfoModel
+import ru.esm.tspiot.domain.PiotResult
+import ru.esm.tspiot.driver.api.model.ean.EanCheckRequest
+import ru.esm.tspiot.driver.api.model.ean.EanCheckResponse
 
 interface PiotManagerClient {
 
@@ -30,4 +33,5 @@ interface PiotManagerClient {
     suspend fun setReceiptInfo(info: ReceiptInfoModel, kktInfo: KktInfoModel)
     suspend fun setKktInfo(kktInfo: KktInfoModel)
     suspend fun setCashier(cashierInfo: CashierInfoModel, kktInfo: KktInfoModel)
+    suspend fun eanCheck(request: EanCheckRequest): PiotResult<EanCheckResponse>
 }
