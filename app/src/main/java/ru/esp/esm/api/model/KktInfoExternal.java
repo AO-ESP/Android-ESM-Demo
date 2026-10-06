@@ -5,6 +5,7 @@ import android.os.Parcelable;
 
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.Objects;
 
@@ -16,15 +17,18 @@ public final class KktInfoExternal implements Parcelable {
     private final String kktInn;
     private final Long codesCheckTimeout;
     private final LmInfoExternal lm;
+    private final String licenceTill;
 
     public KktInfoExternal(String tsPiotId, String kktSerial, String fnSerial,
-                           String kktInn, Long codesCheckTimeout, LmInfoExternal lm) {
+                           String kktInn, Long codesCheckTimeout, LmInfoExternal lm,
+                           String licenceTill) {
         this.tsPiotId = tsPiotId;
         this.kktSerial = kktSerial;
         this.fnSerial = fnSerial;
         this.kktInn = kktInn;
         this.codesCheckTimeout = codesCheckTimeout;
         this.lm = lm;
+        this.licenceTill = licenceTill;
     }
 
     KktInfoExternal(Parcel in) {
@@ -34,6 +38,9 @@ public final class KktInfoExternal implements Parcelable {
         kktInn = in.readString();
         codesCheckTimeout = in.readLong();
         lm = in.readParcelable(LmInfoExternal.class.getClassLoader());
+        // Поле дописано в конец. Старый сервер его не передаёт — тогда в хвосте пусто.
+        // Старый клиент останавливается на lm и не читает этот хвост.
+        licenceTill = in.dataAvail() > 0 ? in.readString() : null;
     }
 
     public static final Creator<KktInfoExternal> CREATOR = new Creator<KktInfoExternal>() {
@@ -56,6 +63,8 @@ public final class KktInfoExternal implements Parcelable {
         dest.writeString(kktInn);
         dest.writeLong(codesCheckTimeout);
         dest.writeParcelable(lm, flags);
+        // Последним: старый клиент останавливается на lm и не читает это поле.
+        dest.writeString(licenceTill);
     }
 
     @Override
@@ -70,7 +79,8 @@ public final class KktInfoExternal implements Parcelable {
         return Objects.equals(tsPiotId, that.tsPiotId) && Objects.equals(kktSerial, that.kktSerial)
                 && Objects.equals(fnSerial, that.fnSerial) && Objects.equals(kktInn, that.kktInn)
                 && Objects.equals(codesCheckTimeout, that.codesCheckTimeout)
-                && Objects.equals(lm, that.lm);
+                && Objects.equals(lm, that.lm)
+                && Objects.equals(licenceTill, that.licenceTill);
     }
 
     @Override
@@ -81,7 +91,13 @@ public final class KktInfoExternal implements Parcelable {
         result = 31 * result + Objects.hashCode(kktInn);
         result = 31 * result + Objects.hashCode(codesCheckTimeout);
         result = 31 * result + Objects.hashCode(lm);
+        result = 31 * result + Objects.hashCode(licenceTill);
         return result;
+    }
+
+    @Nullable
+    public String getLicenceTill() {
+        return licenceTill;
     }
 
     @NonNull
@@ -94,6 +110,7 @@ public final class KktInfoExternal implements Parcelable {
                 ", kktInn='" + kktInn + '\'' +
                 ", codesCheckTimeout=" + codesCheckTimeout +
                 ", lm=" + lm +
+                ", licenceTill='" + licenceTill + '\'' +
                 '}';
     }
 }
