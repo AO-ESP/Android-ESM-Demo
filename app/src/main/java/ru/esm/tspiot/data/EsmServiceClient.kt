@@ -138,7 +138,7 @@ class EsmServiceClient @Inject constructor(private val context: Context) {
 
             try {
                 action(manager, callback)
-            } catch (e: RemoteException) {
+            } catch (e: Exception) {
                 if (continuation.isActive) {
                     continuation.resume(EsmResult.Error(-1, e.message))
                 }
