@@ -19,7 +19,7 @@
 
 ## IEsmService
 
-### Описание методов (версия 2)
+### Описание методов (версия AIDL интерфейса 2)
 
 `getAidlVersion()` - версия интерфейса
 
@@ -35,13 +35,17 @@
 `cisSold(in IBundleResultCallback callback, int skip, int limit)` - получение списка проданных
 товаров из ЛМ ЧЗ
 
-#### Добавлен метод (версия 3, ЕСМ v1.4.2)
-`getInfo(in IBundleResultCallback callback)` - получение информации о ЕСМ, ККТ, ЛМ ЧЗ
+#### Изменения (версия AIDL интерфейса 3, ЕСМ v1.4.2)
+Добавлен метод `getInfo(in IBundleResultCallback callback)` - получение информации о ЕСМ, ККТ, ЛМ ЧЗ
 
-#### Добавлен метод и изменен CodesCheckResponse (версия 4, ЕСМ v1.4.#) // TODO Актуализировать версию
-`eanCheck(in IBundleResultCallback callback, in List<String> eanList)` - проверка EAN в ЛМ ЧЗ
+#### Изменения (версия AIDL интерфейса 4, ЕСМ v1.* - еще не в релизе) // TODO Актуализировать версию
+Добавлен метод `eanCheck(in IBundleResultCallback callback, in List<String> eanList)` - проверка EAN в ЛМ ЧЗ
 
-В CodesCheckResponse добавлен параметр `private final List<EanCheckResult> eans`
+В ответ метода `getInfo(...)` в KktInfoExternal добавлен параметр `private final String licenceTill`
+
+В параметр метода `codesCheck(...)` CodesCheckRequest можно передавать как КИ, так и EAN/GTIN
+
+В ответ метода `codesCheck(...)` в CodesCheckResponse добавлен параметр `private final List<EanCheckResult> eans`
 
 ### Подключение к сервису
 

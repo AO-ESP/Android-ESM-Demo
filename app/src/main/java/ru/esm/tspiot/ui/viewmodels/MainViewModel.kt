@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import ru.esm.tspiot.data.EsmServiceClient
 import ru.esm.tspiot.domain.EsmResult
@@ -22,11 +23,18 @@ class MainViewModel @Inject constructor(
     private val esmServiceClient: EsmServiceClient
 ) : ViewModel() {
     val isConnected: StateFlow<Boolean> = esmServiceClient.isConnected
-    private val _pingResult =
-        MutableStateFlow<EsmResult<Boolean>>(EsmResult.ServiceUnavailable)
-    val pingResult: StateFlow<EsmResult<Boolean>> = _pingResult
+    private val _serviceVersion = MutableStateFlow<Int?>(null)
+    val serviceVersion: StateFlow<Int?> = _serviceVersion.asStateFlow()
     private val _getInfoResult = MutableStateFlow<EsmResult<String>?>(null)
     val getInfoResult: StateFlow<EsmResult<String>?> = _getInfoResult
+
+    init {
+        viewModelScope.launch {
+            isConnected.collect { connected ->
+                _serviceVersion.value = if (connected) readServiceVersion() else null
+            }
+        }
+    }
 
     fun connect() {
         val intent = Intent(ESM_SERVICE_ACTION).apply {
@@ -37,12 +45,6 @@ class MainViewModel @Inject constructor(
 
     fun disconnect() {
         esmServiceClient.disconnect()
-    }
-
-    fun refresh() {
-        viewModelScope.launch {
-            _pingResult.value = Success(esmServiceClient.ping())
-        }
     }
 
     fun getInfo() {
@@ -96,6 +98,13 @@ class MainViewModel @Inject constructor(
         return when (ru.esp.pmsr.v2.BuildConfig.FLAVOR) {
             "atol" -> ATOL_PACKAGE
             else -> OTHER_PACKAGE
+        }
+    }
+
+    private fun readServiceVersion(): Int? {
+        return when (val result = esmServiceClient.getAidlVersion()) {
+            is Success -> result.data
+            else -> null
         }
     }
 

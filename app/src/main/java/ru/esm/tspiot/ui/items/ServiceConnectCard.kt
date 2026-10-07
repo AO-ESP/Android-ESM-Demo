@@ -27,6 +27,7 @@ fun ServiceConnectCard(
     viewModel: MainViewModel
 ) {
     val isConnected by viewModel.isConnected.collectAsStateWithLifecycle()
+    val serviceVersion by viewModel.serviceVersion.collectAsStateWithLifecycle()
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -51,6 +52,13 @@ fun ServiceConnectCard(
                 text = if (isConnected) "✓ Подключено" else "✗ Не подключено",
                 style = MaterialTheme.typography.bodyLarge
             )
+            if (isConnected && serviceVersion != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Версия сервиса: $serviceVersion",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
         }
     }
 
