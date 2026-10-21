@@ -11,54 +11,53 @@ import java.util.Objects;
 
 @Keep
 public final class EanCheckResult implements Parcelable {
-
     @NonNull
-    private final String ean;
+    private final String gtin;
+
+    private final boolean EANblocked;
+
     @Nullable
-    private final Boolean found;
-    @Nullable
-    private final Boolean EANblocked;
-    @Nullable
-    private final Integer pg;
+    private final String message;
 
     public EanCheckResult(
-            @NonNull String ean,
-            @Nullable Boolean found,
-            @Nullable Boolean EANblocked,
-            @Nullable Integer pg
+            @NonNull String gtin,
+            boolean EANblocked,
+            @Nullable String message
     ) {
-        this.ean = ean;
-        this.found = found;
+        this.gtin = gtin;
         this.EANblocked = EANblocked;
-        this.pg = pg;
+        this.message = message;
     }
 
     private EanCheckResult(Parcel in) {
-        ean = Objects.requireNonNull(in.readString());
-        found = in.readByte() == 0 ? null : in.readByte() != 0;
-        EANblocked = in.readByte() == 0 ? null : in.readByte() != 0;
-        pg = in.readByte() == 0 ? null : in.readInt();
+        gtin = Objects.requireNonNull(in.readString());
+        EANblocked = in.readInt() == 1;
+        message = in.readInt() == 1 ? in.readString() : null;
+    }
+
+    @NonNull
+    public String getGtin() {
+        return gtin;
+    }
+
+    public boolean getEANblocked() {
+        return EANblocked;
+    }
+
+    @Nullable
+    public String getMessage() {
+        return message;
     }
 
     @Override
     public void writeToParcel(@NonNull Parcel dest, int flags) {
-        dest.writeString(ean);
-        writeNullableBoolean(dest, found);
-        writeNullableBoolean(dest, EANblocked);
-        if (pg == null) {
-            dest.writeByte((byte) 0);
+        dest.writeString(gtin);
+        dest.writeInt(EANblocked ? 1 : 0);
+        if (message == null) {
+            dest.writeInt(0);
         } else {
-            dest.writeByte((byte) 1);
-            dest.writeInt(pg);
-        }
-    }
-
-    private static void writeNullableBoolean(@NonNull Parcel dest, @Nullable Boolean value) {
-        if (value == null) {
-            dest.writeByte((byte) 0);
-        } else {
-            dest.writeByte((byte) 1);
-            dest.writeByte((byte) (value ? 1 : 0));
+            dest.writeInt(1);
+            dest.writeString(message);
         }
     }
 
@@ -67,7 +66,7 @@ public final class EanCheckResult implements Parcelable {
         return 0;
     }
 
-    public static final Creator<EanCheckResult> CREATOR = new Creator<>() {
+    public static final Creator<EanCheckResult> CREATOR = new Creator<EanCheckResult>() {
         @Override
         public EanCheckResult createFromParcel(Parcel in) {
             return new EanCheckResult(in);
@@ -79,34 +78,27 @@ public final class EanCheckResult implements Parcelable {
         }
     };
 
-    @NonNull
-    public String getEan() {
-        return ean;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof EanCheckResult that)) return false;
+        return EANblocked == that.EANblocked
+                && Objects.equals(gtin, that.gtin)
+                && Objects.equals(message, that.message);
     }
 
-    @Nullable
-    public Boolean getFound() {
-        return found;
-    }
-
-    @Nullable
-    public Boolean getEANblocked() {
-        return EANblocked;
-    }
-
-    @Nullable
-    public Integer getPg() {
-        return pg;
+    @Override
+    public int hashCode() {
+        return Objects.hash(gtin, EANblocked, message);
     }
 
     @NonNull
     @Override
     public String toString() {
         return "EanCheckResult{" +
-                "ean='" + ean + '\'' +
-                ", found=" + found +
+                "gtin='" + gtin + '\'' +
                 ", EANblocked=" + EANblocked +
-                ", pg=" + pg +
+                ", message='" + message + '\'' +
                 '}';
     }
 }

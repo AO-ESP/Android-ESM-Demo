@@ -6,22 +6,25 @@ import android.os.Parcelable;
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 @Keep
 public final class EanCheckResponse implements Parcelable {
-
     @NonNull
     private final List<EanCheckResult> results;
 
     public EanCheckResponse(@NonNull List<EanCheckResult> results) {
-        this.results = new ArrayList<>(results);
+        this.results = results;
     }
 
     private EanCheckResponse(Parcel in) {
         results = Objects.requireNonNull(in.createTypedArrayList(EanCheckResult.CREATOR));
+    }
+
+    @NonNull
+    public List<EanCheckResult> getResults() {
+        return results;
     }
 
     @Override
@@ -34,7 +37,7 @@ public final class EanCheckResponse implements Parcelable {
         return 0;
     }
 
-    public static final Creator<EanCheckResponse> CREATOR = new Creator<>() {
+    public static final Creator<EanCheckResponse> CREATOR = new Creator<EanCheckResponse>() {
         @Override
         public EanCheckResponse createFromParcel(Parcel in) {
             return new EanCheckResponse(in);
@@ -45,11 +48,6 @@ public final class EanCheckResponse implements Parcelable {
             return new EanCheckResponse[size];
         }
     };
-
-    @NonNull
-    public List<EanCheckResult> getResults() {
-        return results;
-    }
 
     @NonNull
     @Override
