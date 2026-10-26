@@ -1,6 +1,7 @@
 package ru.esm.tspiot.ui.viewmodels
 
 import android.content.Intent
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -43,8 +44,11 @@ class EanViewModel @Inject constructor(
 
     fun eanCheck(request: EanCheckRequest) {
         viewModelScope.launch {
+            Log.d(TAG, "eanCheck request: $request")
             _eanCheckResult.value = PiotResult.Loading
-            when (val result = piotManagerClient.eanCheck(request)) {
+            val result = piotManagerClient.eanCheck(request)
+            Log.d(TAG, "eanCheck response: $result")
+            when (result) {
                 is PiotResult.Success -> {
                     _eanCheckResult.value = PiotResult.Success(
                         "Успех: ${result.data.toPrettyString()}"
@@ -72,6 +76,7 @@ class EanViewModel @Inject constructor(
     }
 
     companion object {
+        private const val TAG = "EanViewModel"
         private const val PIOT_ESM_MANAGER_ACTION = "ru.esm.tspiot.action.ACTION_PIOT_MANAGER"
         private const val PIOT_ATOL_MANAGER_ACTION = "ru.atol.os.tspiot.action.ACTION_PIOT_MANAGER"
         private const val ATOL_PACKAGE = "ru.atol.os.tspiot"

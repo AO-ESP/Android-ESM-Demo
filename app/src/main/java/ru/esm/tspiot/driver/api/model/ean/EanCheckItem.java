@@ -6,14 +6,9 @@ import android.os.Parcelable;
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 
-import java.util.Objects;
-
 @Keep
 public final class EanCheckItem implements Parcelable {
-
-    @NonNull
     private final String itemId;
-    @NonNull
     private final String gtin;
 
     public EanCheckItem(@NonNull String itemId, @NonNull String gtin) {
@@ -22,8 +17,18 @@ public final class EanCheckItem implements Parcelable {
     }
 
     private EanCheckItem(Parcel in) {
-        itemId = Objects.requireNonNull(in.readString());
-        gtin = Objects.requireNonNull(in.readString());
+        itemId = in.readString();
+        gtin = in.readString();
+    }
+
+    @NonNull
+    public String getItemId() {
+        return itemId;
+    }
+
+    @NonNull
+    public String getGtin() {
+        return gtin;
     }
 
     @Override
@@ -37,7 +42,7 @@ public final class EanCheckItem implements Parcelable {
         return 0;
     }
 
-    public static final Creator<EanCheckItem> CREATOR = new Creator<>() {
+    public static final Creator<EanCheckItem> CREATOR = new Creator<EanCheckItem>() {
         @Override
         public EanCheckItem createFromParcel(Parcel in) {
             return new EanCheckItem(in);
@@ -48,16 +53,6 @@ public final class EanCheckItem implements Parcelable {
             return new EanCheckItem[size];
         }
     };
-
-    @NonNull
-    public String getItemId() {
-        return itemId;
-    }
-
-    @NonNull
-    public String getGtin() {
-        return gtin;
-    }
 
     @NonNull
     @Override

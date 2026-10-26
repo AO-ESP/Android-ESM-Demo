@@ -9,7 +9,7 @@ import ru.atol.os.tspiot.driver.api.model.CashierInfo;
 import ru.atol.os.tspiot.driver.api.model.KktInfo;
 import ru.atol.os.tspiot.driver.api.model.ReceiptImcData;
 import ru.atol.os.tspiot.driver.api.model.ReceiptInfo;
-import ru.esm.tspiot.driver.api.model.ean.EanCheckRequest;
+import ru.atol.os.tspiot.driver.api.model.ean.EanCheckRequest;
 
 interface IPiotManager {
     void setShiftState(in IBoolCallback callback, in boolean isClosed, in KktInfo kktInfo);

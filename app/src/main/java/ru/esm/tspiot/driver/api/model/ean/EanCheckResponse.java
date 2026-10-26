@@ -5,44 +5,56 @@ import android.os.Parcelable;
 
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Keep
 public final class EanCheckResponse implements Parcelable {
-
-    @NonNull
     private final List<EanCheckResult> results;
     private final boolean hasBlockedItems;
+    private final GtinCheckError error;
 
-    public EanCheckResponse(@NonNull List<EanCheckResult> results) {
-        this.results = new ArrayList<>(results);
-        boolean blocked = false;
-        for (EanCheckResult result : this.results) {
-            if (result.getBlocked()) {
-                blocked = true;
-                break;
-            }
-        }
-        this.hasBlockedItems = blocked;
-    }
-
-    public EanCheckResponse(@NonNull List<EanCheckResult> results, boolean hasBlockedItems) {
-        this.results = new ArrayList<>(results);
+    public EanCheckResponse(
+            @Nullable List<EanCheckResult> results,
+            boolean hasBlockedItems,
+            @Nullable GtinCheckError error
+    ) {
+        this.results = results;
         this.hasBlockedItems = hasBlockedItems;
+        this.error = error;
     }
 
     private EanCheckResponse(Parcel in) {
-        results = Objects.requireNonNull(in.createTypedArrayList(EanCheckResult.CREATOR));
-        hasBlockedItems = in.readByte() != 0;
+        results = in.createTypedArrayList(EanCheckResult.CREATOR);
+        hasBlockedItems = in.readInt() == 1;
+        error = in.readInt() == 1 ? in.readParcelable(GtinCheckError.class.getClassLoader()) : null;
+    }
+
+    @Nullable
+    public List<EanCheckResult> getResults() {
+        return results;
+    }
+
+    public boolean getHasBlockedItems() {
+        return hasBlockedItems;
+    }
+
+    @Nullable
+    public GtinCheckError getError() {
+        return error;
     }
 
     @Override
     public void writeToParcel(@NonNull Parcel dest, int flags) {
         dest.writeTypedList(results);
-        dest.writeByte((byte) (hasBlockedItems ? 1 : 0));
+        dest.writeInt(hasBlockedItems ? 1 : 0);
+        if (error == null) {
+            dest.writeInt(0);
+        } else {
+            dest.writeInt(1);
+            dest.writeParcelable(error, flags);
+        }
     }
 
     @Override
@@ -50,7 +62,7 @@ public final class EanCheckResponse implements Parcelable {
         return 0;
     }
 
-    public static final Creator<EanCheckResponse> CREATOR = new Creator<>() {
+    public static final Creator<EanCheckResponse> CREATOR = new Creator<EanCheckResponse>() {
         @Override
         public EanCheckResponse createFromParcel(Parcel in) {
             return new EanCheckResponse(in);
@@ -63,20 +75,12 @@ public final class EanCheckResponse implements Parcelable {
     };
 
     @NonNull
-    public List<EanCheckResult> getResults() {
-        return results;
-    }
-
-    public boolean getHasBlockedItems() {
-        return hasBlockedItems;
-    }
-
-    @NonNull
     @Override
     public String toString() {
         return "EanCheckResponse{" +
                 "results=" + results +
                 ", hasBlockedItems=" + hasBlockedItems +
+                ", error=" + error +
                 '}';
     }
 }

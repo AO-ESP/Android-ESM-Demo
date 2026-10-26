@@ -27,8 +27,14 @@ import ru.esm.tspiot.data.models.IsmNoticeInfoModel
 import ru.esm.tspiot.data.models.KktInfoModel
 import ru.esm.tspiot.data.models.ReceiptInfoModel
 import ru.esm.tspiot.domain.PiotResult
+import ru.atol.os.tspiot.driver.api.model.ean.EanCheckItem as AtolEanCheckItem
+import ru.atol.os.tspiot.driver.api.model.ean.EanCheckRequest as AtolEanCheckRequest
+import ru.atol.os.tspiot.driver.api.model.ean.EanCheckResponse as AtolEanCheckResponse
+import ru.esm.tspiot.driver.api.model.ean.EanCheckItem
 import ru.esm.tspiot.driver.api.model.ean.EanCheckRequest
 import ru.esm.tspiot.driver.api.model.ean.EanCheckResponse
+import ru.esm.tspiot.driver.api.model.ean.EanCheckResult
+import ru.esm.tspiot.driver.api.model.ean.GtinCheckError
 import javax.inject.Inject
 import kotlin.coroutines.resume
 
@@ -113,7 +119,7 @@ class PiotAtolManagerClientImpl  @Inject constructor(
         executeUnitCallback {m, cb -> m.setCashier(cb, cashierInfo.mapToESMModel(), kktInfo.mapToESMModel())  }
 
     override suspend fun eanCheck(request: EanCheckRequest): PiotResult<EanCheckResponse> {
-        val result = executeBundleCallback { m, cb -> m.eanCheck(cb, request) }
+        val result = executeBundleCallback { m, cb -> m.eanCheck(cb, request.toAtol()) }
         return when (result) {
             is PiotResult.Success -> parseEanCheckResponse(result.data)
             is PiotResult.Error -> result
@@ -184,7 +190,7 @@ class PiotAtolManagerClientImpl  @Inject constructor(
         return suspendCancellableCoroutine { continuation ->
             val callback = object : IBundleResultCallback.Stub() {
                 override fun onSuccess(bundle: Bundle) {
-                    bundle.classLoader = EanCheckResponse::class.java.classLoader
+                    bundle.classLoader = AtolEanCheckResponse::class.java.classLoader
                     if (continuation.isActive) {
                         continuation.resume(PiotResult.Success(bundle))
                     }
@@ -208,18 +214,40 @@ class PiotAtolManagerClientImpl  @Inject constructor(
     }
 
     private fun parseEanCheckResponse(bundle: Bundle): PiotResult<EanCheckResponse> {
-        bundle.classLoader = EanCheckResponse::class.java.classLoader
+        bundle.classLoader = AtolEanCheckResponse::class.java.classLoader
         val response = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            bundle.getParcelable(BUNDLE_KEY, EanCheckResponse::class.java)
+            bundle.getParcelable(BUNDLE_KEY, AtolEanCheckResponse::class.java)
         } else {
             @Suppress("DEPRECATION")
-            bundle.getParcelable(BUNDLE_KEY)
+            bundle.getParcelable<AtolEanCheckResponse>(BUNDLE_KEY)
         }
         return if (response != null) {
-            PiotResult.Success(response)
+            PiotResult.Success(response.toEsm())
         } else {
             PiotResult.Error(-3, "Empty EanCheckResponse")
         }
+    }
+
+    private fun EanCheckRequest.toAtol(): AtolEanCheckRequest {
+        val atolItems = items?.map { item ->
+            AtolEanCheckItem(item.itemId, item.gtin)
+        }
+        return AtolEanCheckRequest(atolItems)
+    }
+
+    private fun AtolEanCheckResponse.toEsm(): EanCheckResponse {
+        val esmResults = results?.map { result ->
+            EanCheckResult(
+                result.itemId,
+                result.gtin,
+                result.isBlocked,
+                result.pg,
+            )
+        }
+        val esmError = error?.let { atolError ->
+            GtinCheckError(atolError.code, atolError.message)
+        }
+        return EanCheckResponse(esmResults, hasBlockedItems, esmError)
     }
 
     companion object {
