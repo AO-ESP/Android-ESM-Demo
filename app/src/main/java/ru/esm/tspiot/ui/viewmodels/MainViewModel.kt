@@ -1,6 +1,7 @@
 package ru.esm.tspiot.ui.viewmodels
 
 import android.content.Intent
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -112,6 +113,7 @@ class MainViewModel @Inject constructor(
 
     fun setReceiptInfo(info: ReceiptInfoModel, kktInfo: KktInfoModel){
         viewModelScope.launch {
+            Log.d("setReceiptInfo called", "receiptInfo - $info\nkktInfo - $kktInfo")
             piotManagerClient.setReceiptInfo(
                 info, kktInfo
             )

@@ -29,6 +29,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import ru.esm.tspiot.data.models.CashierInfoModel
 import ru.esm.tspiot.data.models.ErrorInfoModel
 import ru.esm.tspiot.data.models.ErrorRequestModel
+import ru.esm.tspiot.data.models.GoodsInfoModel
 import ru.esm.tspiot.data.models.ImcData
 import ru.esm.tspiot.data.models.IsmNoticeInfoModel
 import ru.esm.tspiot.data.models.KktInfoModel
@@ -199,9 +200,29 @@ fun PiotScreenContent(
                             "receiptId", // номер чека
                             listOf(
                                 ReceiptImcDataModel(
-                                    "ki", // номер ФД в ФН
-                                    "ofdStatus" // статус ОФД
-                                )
+                                    ki = "ki", // код идентификации
+                                    ofdStatus = "ofdStatus", // статус ОФД
+                                    goodsInfo = GoodsInfoModel(
+                                        goodsName = "Молоко",
+                                        price = 89.9,
+                                        scannedCode = "04601234567890",
+                                        quantity = 1.0,
+                                        paymentType = 4,
+                                        itemType = 1,
+                                        unitMeasurementType = 0,
+                                        goodsInfoCheckResult = 0,
+                                        taxRate = 1,
+                                        amount = 89.9,
+                                    ),
+                                ),
+                                ReceiptImcDataModel(
+                                    goodsInfo = GoodsInfoModel(
+                                        goodsName = "Хлеб",
+                                        price = 45.0,
+                                        quantity = 1.0,
+                                        amount = 45.0,
+                                    ),
+                                ),
                             )
                         ),
                         getDefaultKktInfoModel()

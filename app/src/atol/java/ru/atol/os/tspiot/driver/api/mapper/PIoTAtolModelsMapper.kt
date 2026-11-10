@@ -4,6 +4,7 @@ import kotlinx.serialization.json.Json
 import ru.esm.tspiot.data.models.CashierInfoModel
 import ru.esm.tspiot.data.models.ErrorInfoModel
 import ru.esm.tspiot.data.models.ErrorRequestModel
+import ru.esm.tspiot.data.models.GoodsInfoModel
 import ru.esm.tspiot.data.models.IsmNoticeInfoModel
 import ru.esm.tspiot.data.models.KktInfoModel
 import ru.esm.tspiot.data.models.ReceiptImcDataModel
@@ -11,6 +12,7 @@ import ru.esm.tspiot.data.models.ReceiptInfoModel
 import ru.atol.os.tspiot.driver.api.model.CashierInfo
 import ru.atol.os.tspiot.driver.api.model.ErrorInfo
 import ru.atol.os.tspiot.driver.api.model.ErrorRequest
+import ru.atol.os.tspiot.driver.api.model.GoodsInfo
 import ru.atol.os.tspiot.driver.api.model.IsmNoticeInfo
 import ru.atol.os.tspiot.driver.api.model.KktInfo
 import ru.atol.os.tspiot.driver.api.model.ReceiptImcData
@@ -65,10 +67,26 @@ fun KktInfoModel.mapToESMModel(): KktInfo {
     )
 }
 
+fun GoodsInfoModel.mapToESMModel(): GoodsInfo {
+    return GoodsInfo(
+        this.goodsName,
+        this.price,
+        this.scannedCode,
+        this.quantity,
+        this.paymentType,
+        this.itemType,
+        this.unitMeasurementType,
+        this.goodsInfoCheckResult,
+        this.taxRate,
+        this.amount,
+    )
+}
+
 fun ReceiptImcDataModel.mapToESMModel(): ReceiptImcData {
     return ReceiptImcData(
         this.ki,
         this.ofdStatus,
+        this.goodsInfo?.mapToESMModel(),
     )
 }
 
@@ -79,6 +97,7 @@ fun ReceiptInfoModel.mapToESMModel(): ReceiptInfo {
             ReceiptImcData(
                 it?.ki,
                 it?.ofdStatus,
+                it?.goodsInfo?.mapToESMModel(),
             )
         },
     )

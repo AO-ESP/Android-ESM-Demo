@@ -2,10 +2,9 @@ package ru.atol.os.tspiot.driver.api.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
-
+import androidx.annotation.Nullable;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,23 +14,56 @@ import java.util.List;
 
 @Keep
 public final class ReceiptImcData implements Parcelable {
+    // Старый клиент пишет только ki и ofdStatus. Следующий int в общем Parcel —
+    // флаг элемента списка или KktInfo, он равен 0 или 1. Иначе readParcelable
+    // принимает fnSerial за имя класса.
+    private static final int GOODS_INFO_MARKER = 0x47494E46;
+
     private final String ki;
     private final String ofdStatus;
+    private final GoodsInfo goodsInfo;
 
-    public ReceiptImcData(String ki, String ofdStatus) {
-        this.ki = ki;
-        this.ofdStatus = ofdStatus;
+    public ReceiptImcData(@Nullable String ki, @Nullable String ofdStatus) {
+        this(ki, ofdStatus, null);
     }
 
-    protected ReceiptImcData(Parcel in) {
+    public ReceiptImcData(
+            @Nullable String ki,
+            @Nullable String ofdStatus,
+            @Nullable GoodsInfo goodsInfo
+    ) {
+        this.ki = ki;
+        this.ofdStatus = ofdStatus;
+        this.goodsInfo = goodsInfo;
+    }
+
+    protected ReceiptImcData(@NonNull Parcel in) {
         ki = in.readString();
         ofdStatus = in.readString();
+        goodsInfo = readGoodsInfo(in);
     }
 
     @Override
-    public void writeToParcel(Parcel dest, int flags) {
+    public void writeToParcel(@NonNull Parcel dest, int flags) {
         dest.writeString(ki);
         dest.writeString(ofdStatus);
+        if (goodsInfo != null) {
+            dest.writeInt(GOODS_INFO_MARKER);
+            dest.writeParcelable(goodsInfo, flags);
+        }
+    }
+
+    @Nullable
+    private static GoodsInfo readGoodsInfo(@NonNull Parcel in) {
+        if (in.dataAvail() < 4) {
+            return null;
+        }
+        int position = in.dataPosition();
+        if (in.readInt() != GOODS_INFO_MARKER) {
+            in.setDataPosition(position);
+            return null;
+        }
+        return in.readParcelable(GoodsInfo.class.getClassLoader());
     }
 
     @Override
@@ -51,12 +83,19 @@ public final class ReceiptImcData implements Parcelable {
         }
     };
 
+    @Nullable
     public String getKi() {
         return ki;
     }
 
+    @Nullable
     public String getOfdStatus() {
         return ofdStatus;
+    }
+
+    @Nullable
+    public GoodsInfo getGoodsInfo() {
+        return goodsInfo;
     }
 
     @NonNull
@@ -65,10 +104,12 @@ public final class ReceiptImcData implements Parcelable {
         return "ReceiptImcData{" +
                 "ki='" + ki + '\'' +
                 ", ofdStatus='" + ofdStatus + '\'' +
+                ", goodsInfo=" + goodsInfo +
                 '}';
     }
 
-    public static List<ReceiptImcData> fromJsonArray(String jsonArray) {
+    @NonNull
+    public static List<ReceiptImcData> fromJsonArray(@NonNull String jsonArray) {
         try {
             List<ReceiptImcData> result = new LinkedList<>();
             JSONArray array = new JSONArray(jsonArray);
@@ -83,14 +124,45 @@ public final class ReceiptImcData implements Parcelable {
     }
 
     @NonNull
-    public static ReceiptImcData fromJson(String jsonObject) {
+    public static ReceiptImcData fromJson(@NonNull String jsonObject) {
         try {
             JSONObject object = new JSONObject(jsonObject);
-            String ki = object.optString("ki");
-            String ofdStatus = object.optString("ofd_status");
-            return new ReceiptImcData(ki, ofdStatus);
+            String ki = nullableString(object, "ki");
+            String ofdStatus = nullableString(object, "ofd_status");
+            return new ReceiptImcData(ki, ofdStatus, parseGoodsInfo(object));
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Nullable
+    private static String nullableString(@NonNull JSONObject object, @NonNull String key) {
+        if (!object.has(key) || object.isNull(key)) {
+            return null;
+        }
+        String value = object.optString(key, null);
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
+        return value;
+    }
+
+    @Nullable
+    private static GoodsInfo parseGoodsInfo(@NonNull JSONObject object) throws JSONException {
+        if (!object.has("goodsInfo") || object.isNull("goodsInfo")) {
+            return null;
+        }
+        Object raw = object.get("goodsInfo");
+        if (raw instanceof JSONObject) {
+            return GoodsInfo.fromJson((JSONObject) raw);
+        }
+        if (raw instanceof String) {
+            String json = (String) raw;
+            if (json.isEmpty()) {
+                return null;
+            }
+            return GoodsInfo.fromJson(new JSONObject(json));
+        }
+        return null;
     }
 }
