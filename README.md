@@ -17,6 +17,41 @@
 
 *Примечание: Имя пакета для подключения зависит от вендора (Атол, MSPos, др.)*
 
+## IPiotManager.setReceiptInfo
+
+`setReceiptInfo(in IResultCallback callback, in ReceiptInfo info, in KktInfo kktInfo)` передаёт
+закрытый чек. `ReceiptInfo` содержит `receiptId` и список `ReceiptImcData`.
+
+У `ReceiptImcData` три поля:
+
+- `ki` — код идентификации, nullable
+- `ofdStatus` — статус ОФД, nullable
+- `goodsInfo` — реквизиты позиции, тег 1059, nullable
+
+Маркированная позиция заполняет `ki`, `ofdStatus` и `goodsInfo`. Позиция без КМ передаёт только
+`goodsInfo`.
+
+Поля `GoodsInfo` (ключи JSON в camelCase): `goodsName`, `price`, `scannedCode`, `quantity`,
+`paymentType`, `itemType`, `unitMeasurementType`, `goodsInfoCheckResult`, `taxRate`, `amount`.
+Пустая строка записывается как `"UNKNOWN"`, отсутствующее или нечисловое значение — как `-1`.
+
+Пакет моделей зависит от flavor:
+
+- mspos: `ru.esm.tspiot.driver.api.model`
+- atol: `ru.atol.os.tspiot.driver.api.model`
+
+Конструктор `(ki, ofdStatus)` оставлен. Без `goodsInfo` в `Parcel` пишутся только эти две строки,
+как у клиента до ESMA-463. Если `goodsInfo` задан, перед ним пишется маркер `0x47494E46`, затем
+сам parcelable. Чтение без маркера возвращает позицию `Parcel` назад: следующий `int` равен `0`
+или `1` и принадлежит флагу элемента списка либо `KktInfo`.
+
+## IPiotManager.eanCheck
+
+Проверка EAN/GTIN. Отдельные инструкции по flavor:
+
+- [flavor atol (терминалы Атол)](docs/ean-check-atol.md)
+- [flavor mspos (остальные терминалы)](docs/ean-check-mspos.md)
+
 ## IEsmService
 
 ### Описание методов (версия AIDL интерфейса 2)
@@ -59,3 +94,6 @@ val intent = Intent(ESM_SERVICE_ACTION).apply {setPackage(PACKAGE)}
 
 context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
 ```
+
+## Особенность сборки
+Реализация `PiotManagerClient` выбирается product flavor: `atol` подключает `PiotAtolManagerClientImpl`, `mspos` — `PiotESMManagerClientImpl`. Модули лежат в `app/src/atol` и `app/src/mspos`.

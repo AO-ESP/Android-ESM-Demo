@@ -14,21 +14,30 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import ru.esm.tspiot.ui.viewmodels.MainViewModel
+
+@Preview
+@Composable
+fun ServiceConnectCardPreview() {
+    ServiceConnectCard(
+        isConnected = true,
+        onConnect = {},
+        onDisconnect = {},
+        serviceVersion = 4
+    )
+}
 
 @Composable
 fun ServiceConnectCard(
-    viewModel: MainViewModel
+    isConnected: Boolean,
+    onConnect: () -> Unit,
+    onDisconnect: () -> Unit,
+    serviceVersion: Int? = null,
 ) {
-    val isConnected by viewModel.isConnected.collectAsStateWithLifecycle()
-    val serviceVersion by viewModel.serviceVersion.collectAsStateWithLifecycle()
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -68,7 +77,7 @@ fun ServiceConnectCard(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Button(
-            onClick = { viewModel.connect() },
+            onClick = onConnect,
             enabled = !isConnected,
             modifier = Modifier.weight(1f)
         ) {
@@ -76,7 +85,7 @@ fun ServiceConnectCard(
         }
 
         Button(
-            onClick = { viewModel.disconnect() },
+            onClick = onDisconnect,
             enabled = isConnected,
             modifier = Modifier.weight(1f),
             colors = ButtonDefaults.buttonColors(

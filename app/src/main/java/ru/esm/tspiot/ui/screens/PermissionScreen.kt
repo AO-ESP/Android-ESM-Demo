@@ -20,17 +20,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
+import ru.esm.tspiot.ui.navigation.LocalNavController
+import ru.esm.tspiot.ui.navigation.createPreviewNavController
+
+@Preview
+@Composable
+fun PermissionScreenPreview(){
+    PermissionScreen(createPreviewNavController())
+}
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun PermissionScreen(
-    navController: NavHostController
+    navController: NavHostController = LocalNavController.current,
 ) {
     val permissionState = rememberPermissionState(
         permission = Manifest.permission.CAMERA

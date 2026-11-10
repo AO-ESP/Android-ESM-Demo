@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -34,14 +35,68 @@ import androidx.navigation.NavHostController
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.common.Barcode
 import ru.esm.tspiot.domain.ScanResult
+import ru.esm.tspiot.ui.navigation.LocalNavController
+import ru.esm.tspiot.ui.navigation.createPreviewNavController
+
+@Preview
+@Composable
+fun ScannerScreenPreview(){
+    ScannerScreenContent(
+        navController = createPreviewNavController(),
+        onBarcodeScannedAction = { _, _ -> },
+        onBarcodeScannedErrorAction = { _ -> },
+        scanResult = setOf(ScanResult("text", "hh:mm")),
+        isScanning = true,
+        onScanAction = { },
+        onClearResultAction = { },
+        errorMessage = null,
+        onMessageErrorClearAction = { }
+    )
+}
 
 @Composable
 fun ScannerScreen(
-    navController: NavHostController,
+    navController: NavHostController = LocalNavController.current,
     viewModel: ScannerViewModel = hiltViewModel()
 ) {
+
     val scanResult by viewModel.scanResult.collectAsStateWithLifecycle()
     val isScanning by viewModel.isScanning.collectAsStateWithLifecycle()
+
+    ScannerScreenContent(
+        navController = navController,
+        onBarcodeScannedAction = { text, format ->
+            viewModel.onScanResult(
+                ScanResult(
+                    if (text.startsWith("\\u")) text.substring(2) else text,
+                    format
+                )
+            )
+        },
+        onBarcodeScannedErrorAction = { error ->
+            viewModel.onScanError(error)
+        },
+        scanResult = scanResult,
+        isScanning = isScanning,
+        onScanAction = { viewModel.scan() },
+        onClearResultAction = { viewModel.clearResult() },
+        errorMessage = viewModel.errorMessage.value,
+        onMessageErrorClearAction = { viewModel.errorMessage.value = null }
+    )
+}
+
+@Composable
+fun ScannerScreenContent(
+    navController: NavHostController = LocalNavController.current,
+    onBarcodeScannedAction: (String, String) -> Unit,
+    onBarcodeScannedErrorAction: (String) -> Unit,
+    scanResult: Set<ScanResult>?,
+    isScanning: Boolean,
+    onScanAction: () -> Unit,
+    onClearResultAction: () -> Unit,
+    errorMessage: String?,
+    onMessageErrorClearAction: () -> Unit
+) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         CameraPreview(
@@ -54,15 +109,10 @@ fun ScannerScreen(
                 )
                 .build(),
             onBarcodeScanned = { text, format ->
-                viewModel.onScanResult(
-                    ScanResult(
-                        if (text.startsWith("\\u")) text.substring(2) else text,
-                        format
-                    )
-                )
+                onBarcodeScannedAction(text, format)
             },
             onError = { error ->
-                viewModel.onScanError(error)
+                onBarcodeScannedErrorAction(error)
             }
         )
 
@@ -104,7 +154,6 @@ fun ScannerScreen(
                 )
             }
         }
-
 
         if (!isScanning) {
             scanResult?.let { marks ->
@@ -158,7 +207,7 @@ fun ScannerScreen(
                                         modifier = Modifier
                                             .padding(end = 2.dp)
                                             .weight(1f),
-                                        onClick = { viewModel.scan() }
+                                        onClick = onScanAction
                                     ) {
                                         Text("Добавить")
                                     }
@@ -184,7 +233,7 @@ fun ScannerScreen(
                                     modifier = Modifier
                                         .padding(horizontal = 16.dp)
                                         .fillMaxWidth(),
-                                    onClick = { viewModel.clearResult() }
+                                    onClick = onClearResultAction
                                 ) {
                                     Text("Очистить")
                                 }
@@ -197,7 +246,7 @@ fun ScannerScreen(
     }
 
         // Error overlay
-        viewModel.errorMessage.value?.let { error ->
+    errorMessage?.let { error ->
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -229,7 +278,7 @@ fun ScannerScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Button(
-                            onClick = { viewModel.errorMessage.value = null }
+                            onClick = onMessageErrorClearAction
                         ) {
                             Text("Try Again")
                         }

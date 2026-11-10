@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,41 +17,38 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import kotlinx.coroutines.launch
-import ru.atol.os.tspiot.presentation.ui.navigation.AppRoute
-import ru.esm.tspiot.ui.items.ResultDisplay
-import ru.esm.tspiot.ui.items.ServiceConnectCard
-import ru.esm.tspiot.ui.items.ServiceInfoCard
-import ru.esm.tspiot.ui.viewmodels.MainViewModel
+import ru.esm.tspiot.ui.navigation.AppRoute
+import ru.esm.tspiot.ui.navigation.LocalNavController
+import ru.esm.tspiot.ui.navigation.createPreviewNavController
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+@Preview
+@Composable
+fun MainScreenPreview() {
+    MainScreenContent(
+        navController = createPreviewNavController(),
+    )
+}
+
 @Composable
 fun MainScreen(
+    navController: NavHostController = LocalNavController.current,
+) {
+    MainScreenContent(navController)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScreenContent(
     navController: NavHostController,
-    viewModel: MainViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
-    val isConnected by viewModel.isConnected.collectAsStateWithLifecycle()
-    val getInfoResult by viewModel.getInfoResult.collectAsStateWithLifecycle()
-    val scrollState = rememberScrollState()
-    val coroutineScope = rememberCoroutineScope()
-
-    LaunchedEffect(getInfoResult) {
-        coroutineScope.launch {
-            scrollState.animateScrollTo(scrollState.maxValue)
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -59,8 +56,14 @@ fun MainScreen(
                 title = { Text("ESM Demo") },
                 navigationIcon = {
                     IconButton(
-                        onClick = { (context as? android.app.Activity)?.finish() }
-                    ) { Icon(Icons.AutoMirrored.Default.ArrowBack, null) }
+                        onClick = { (context as? android.app.Activity)?.finish() },
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Default.ExitToApp,
+                            contentDescription = "Выход",
+                            modifier = Modifier.rotate(180f)
+                        )
+                    }
                 }
             )
         }
@@ -70,46 +73,28 @@ fun MainScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
-                .verticalScroll(scrollState),
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Информация о сервисе
-            ServiceInfoCard(viewModel.getServicePackage())
-            ServiceConnectCard(viewModel)
-
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                enabled = isConnected,
-                onClick = { navController.navigate(AppRoute.CodesCheckScreenRoute.id) }
+                onClick = { navController.navigate(AppRoute.MainScanScreenRoute.id) }
             ) {
-                Text("Проверка марок")
+                Text("Работа с марками")
             }
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                enabled = isConnected,
-                onClick = { navController.navigate(AppRoute.EansCheckScreenRoute.id) }
+                onClick = { navController.navigate(AppRoute.MainPiotScreenRoute.id) }
             ) {
-                Text("Проверка EAN")
+                Text("Работа с событиями")
             }
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                enabled = isConnected,
-                onClick = { navController.navigate(AppRoute.LmScreenRoute.id) }
+                onClick = { navController.navigate(AppRoute.EanScreenRoute.id) }
             ) {
-                Text("Работа с ЛМ ЧЗ")
+                Text("Проверка EAN через ДККТ")
             }
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                enabled = isConnected,
-                onClick = {
-                    viewModel.getInfo()
-
-                }
-            ) {
-                Text("GET INFO")
-            }
-            ResultDisplay(getInfoResult)
         }
     }
 }

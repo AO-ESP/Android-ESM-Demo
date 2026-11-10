@@ -1,0 +1,160 @@
+package ru.esm.tspiot.ui.screens
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import kotlinx.coroutines.launch
+import ru.esm.tspiot.domain.EsmResult
+import ru.esm.tspiot.ui.items.ResultDisplay
+import ru.esm.tspiot.ui.items.ServiceConnectCard
+import ru.esm.tspiot.ui.items.ServiceInfoCard
+import ru.esm.tspiot.ui.navigation.AppRoute
+import ru.esm.tspiot.ui.navigation.LocalNavController
+import ru.esm.tspiot.ui.navigation.createPreviewNavController
+import ru.esm.tspiot.ui.viewmodels.MainViewModel
+
+@Preview
+@Composable
+fun MainScanScreenPreview() {
+    MainScanScreenContent(
+        navController = createPreviewNavController(),
+        isConnected = true,
+        serviceVersion = 4,
+        getInfoResult = null,
+        onConnect = {},
+        onDisconnect = {},
+        onGetInfo = {},
+        servicePackage = "ServicePackage"
+    )
+}
+
+@Composable
+fun MainScanScreen(
+    navController: NavHostController = LocalNavController.current,
+    viewModel: MainViewModel = hiltViewModel(),
+) {
+    val isConnected by viewModel.isESMServiceConnected.collectAsStateWithLifecycle()
+    val serviceVersion by viewModel.serviceVersion.collectAsStateWithLifecycle()
+    val getInfoResult by viewModel.getInfoResult.collectAsStateWithLifecycle()
+    val servicePackage = viewModel.getServicePackage()
+
+    MainScanScreenContent(
+        navController,
+        isConnected,
+        serviceVersion,
+        getInfoResult,
+        onConnect = { viewModel.connectToESMService() },
+        onDisconnect = { viewModel.disconnectFromESMService() },
+        onGetInfo = { viewModel.getInfo() },
+        servicePackage
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+@Composable
+fun MainScanScreenContent(
+    navController: NavHostController,
+    isConnected: Boolean,
+    serviceVersion: Int?,
+    getInfoResult: EsmResult<String>?,
+    onConnect: () -> Unit,
+    onDisconnect: () -> Unit,
+    onGetInfo: () -> Unit,
+    servicePackage: String
+) {
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(getInfoResult) {
+        coroutineScope.launch {
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("ESM Demo") },
+                navigationIcon = {
+                    IconButton(
+                        onClick = { navController.navigate(AppRoute.id) }
+                    ) { Icon(Icons.AutoMirrored.Default.ArrowBack, null) }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+                .verticalScroll(scrollState),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Информация о сервисе
+            ServiceInfoCard(servicePackage)
+            ServiceConnectCard(
+                isConnected = isConnected,
+                onConnect = onConnect,
+                onDisconnect = onDisconnect,
+                serviceVersion = serviceVersion
+            )
+
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                enabled = isConnected,
+                onClick = { navController.navigate(AppRoute.CodesCheckScreenRoute.id) }
+            ) {
+                Text("Проверка марок")
+            }
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                enabled = isConnected,
+                onClick = { navController.navigate(AppRoute.EansCheckScreenRoute.id) }
+            ) {
+                Text("Проверка EAN")
+            }
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                enabled = isConnected,
+                onClick = { navController.navigate(AppRoute.LmScreenRoute.id) }
+            ) {
+                Text("Работа с ЛМ ЧЗ")
+            }
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                enabled = isConnected,
+                onClick = onGetInfo
+            ) {
+                Text("GET INFO")
+            }
+            ResultDisplay(getInfoResult)
+        }
+    }
+}

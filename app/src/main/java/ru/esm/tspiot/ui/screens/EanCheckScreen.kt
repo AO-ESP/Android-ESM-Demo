@@ -29,7 +29,8 @@ import androidx.navigation.NavHostController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import ru.atol.os.tspiot.presentation.ui.navigation.AppRoute
+import ru.esm.tspiot.ui.navigation.AppRoute
+import ru.esm.tspiot.ui.navigation.LocalNavController
 import ru.esm.tspiot.domain.ScanResult
 import ru.esm.tspiot.ui.items.MethodSection
 import ru.esm.tspiot.ui.items.NumberInputField
@@ -39,7 +40,7 @@ import ru.esm.tspiot.ui.viewmodels.EanCheckViewModel
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun EanCheckScreen(
-    navController: NavHostController,
+    navController: NavHostController = LocalNavController.current,
     viewModel: EanCheckViewModel = hiltViewModel()
 ) {
     val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
@@ -76,7 +77,7 @@ fun EanCheckScreen(
                 title = { Text("Проверка") },
                 navigationIcon = {
                     IconButton(
-                        onClick = { navController.navigate(AppRoute.id) }
+                        onClick = { navController.popBackStack() }
                     ) { Icon(Icons.AutoMirrored.Default.ArrowBack, null) }
                 }
             )
@@ -97,13 +98,13 @@ fun EanCheckScreen(
                             scanResult = null
                             viewModel.clearCheckResult()
                             navController.navigate(AppRoute.EanScannerScreenRoute.id) {
-                                popUpTo(AppRoute.CodesCheckScreenRoute.id) {
+                                popUpTo(AppRoute.EansCheckScreenRoute.id) {
                                     inclusive = false
                                 }
                             }
                         } else {
                             navController.navigate(AppRoute.PermissionScreenRoute.id) {
-                                popUpTo(AppRoute.CodesCheckScreenRoute.id) {
+                                popUpTo(AppRoute.EansCheckScreenRoute.id) {
                                     inclusive = false
                                 }
                             }

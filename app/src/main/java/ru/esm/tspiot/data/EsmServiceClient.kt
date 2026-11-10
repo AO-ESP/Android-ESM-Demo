@@ -83,6 +83,16 @@ class EsmServiceClient @Inject constructor(private val context: Context) {
         executeCallback<Bundle> { m, cb -> m.eanCheck(cb, eans) }
 
     /**
+     * Проверяет активность сервиса через вызов getAidlVersion().
+     */
+    suspend fun ping(): Boolean {
+        return when (getAidlVersion()) {
+            is EsmResult.Success -> true
+            else -> false
+        }
+    }
+
+    /**
      * Получает версию AIDL интерфейса.
      */
     fun getAidlVersion(): EsmResult<Int> {

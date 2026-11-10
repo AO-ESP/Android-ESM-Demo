@@ -1,16 +1,29 @@
-package ru.atol.os.tspiot.presentation.ui.navigation
+package ru.esm.tspiot.ui.navigation
 
 sealed class Route {
     abstract val id: String
     open val idWithArg: String get() = id
     abstract val title: String
-
-
 }
 
 data object AppRoute : Route() {
     override val id = "main"
-    override val title = "ЕСП ПМСР"
+    override val title = "Главный экран"
+
+    data object MainScanScreenRoute : Route() {
+        override val id: String = "scan_screen"
+        override val title = "ЕСП ПМСР"
+    }
+
+    data object MainPiotScreenRoute : Route() {
+        override val id: String = "piot_screen"
+        override val title = "ПИоТ ПМСР"
+    }
+
+    data object EanScreenRoute : Route() {
+        override val id: String = "ean_screen"
+        override val title = "EAN"
+    }
 
     data object CodesCheckScreenRoute : Route() {
         override val id: String = "codes_check"

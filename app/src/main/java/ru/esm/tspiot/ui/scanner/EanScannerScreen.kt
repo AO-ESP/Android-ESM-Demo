@@ -34,10 +34,11 @@ import androidx.navigation.NavHostController
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.common.Barcode
 import ru.esm.tspiot.domain.ScanResult
+import ru.esm.tspiot.ui.navigation.LocalNavController
 
 @Composable
 fun EanScannerScreen(
-    navController: NavHostController,
+    navController: NavHostController = LocalNavController.current,
     viewModel: ScannerViewModel = hiltViewModel()
 ) {
     val scanResult by viewModel.scanResult.collectAsStateWithLifecycle()
