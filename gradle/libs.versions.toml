@@ -24,7 +24,7 @@ fragmentKtx = "1.8.9"
 ksp = "2.2.0-2.0.2"
 
 android-minSdkAtol = "24"
-android-minSdkMspos = "23"
+android-minSdkEsp = "23"
 navigationCompose = "2.9.7"
 zxingAndroidEmbedded = "4.3.0"
 

@@ -2,6 +2,10 @@
 
 Проверка EAN/GTIN через AIDL-сервис `IPiotManager` ТС ПИоТ на терминалах Атол.
 
+Полный контракт `IPiotManager` (остальные методы, `KktInfo`, чек, ошибки) — в [ipiot-manager.md](ipiot-manager.md). Общие правила bind и Bundle — в [connection.md](connection.md).
+
+Этот `eanCheck` не совпадает с `IEsmService.eanCheck`: там на вход `List<String>`, а ответ — `ru.esp.esm.api.model.EanCheckResponse` (`gtin`, `EANblocked`, `message`). См. [iesm-service.md](iesm-service.md).
+
 Пакет сервиса: `ru.atol.os.tspiot`  
 Action: `ru.atol.os.tspiot.action.ACTION_PIOT_MANAGER`  
 Интерфейс: `ru.atol.os.tspiot.driver.api.IPiotManager`
@@ -18,7 +22,7 @@ Action: `ru.atol.os.tspiot.action.ACTION_PIOT_MANAGER`
 package ru.atol.os.tspiot.driver.api;
 
 import ru.atol.os.tspiot.driver.api.callback.IBundleResultCallback;
-import ru.esm.tspiot.driver.api.model.ean.EanCheckRequest;
+import ru.atol.os.tspiot.driver.api.model.ean.EanCheckRequest;
 
 interface IPiotManager {
     void eanCheck(in IBundleResultCallback callback, in EanCheckRequest request);
@@ -53,28 +57,32 @@ interface IBundleResultCallback {
 }
 ```
 
-AIDL/Java-модели (пакет `ru.esm.tspiot.driver.api.model.ean`):
+AIDL/Java-модели (пакет `ru.atol.os.tspiot.driver.api.model.ean`):
 
 - `EanCheckRequest` — поле `items`
 - `EanCheckItem` — поля `itemId`, `gtin`
 
 Готовые файлы:
 
-- `app/src/main/java/ru/esm/tspiot/driver/api/model/ean/EanCheckRequest.java`
-- `app/src/main/java/ru/esm/tspiot/driver/api/model/ean/EanCheckItem.java`
-- `app/src/main/aidl/ru/esm/tspiot/driver/api/model/ean/EanCheckRequest.aidl`
-- `app/src/main/aidl/ru/esm/tspiot/driver/api/model/ean/EanCheckItem.aidl`
+- `app/src/atol/java/ru/atol/os/tspiot/driver/api/model/ean/EanCheckRequest.java`
+- `app/src/atol/java/ru/atol/os/tspiot/driver/api/model/ean/EanCheckItem.java`
+- `app/src/atol/aidl/ru/atol/os/tspiot/driver/api/model/ean/EanCheckRequest.aidl`
+- `app/src/atol/aidl/ru/atol/os/tspiot/driver/api/model/ean/EanCheckItem.aidl`
+
+Классы с тем же именем в `ru.esm.tspiot.driver.api.model.ean` на Атол в Binder не передаются. Их пакет другой, сервис такой `Parcel` не разберёт.
 
 ### Ответ в Bundle
 
-Сервер кладёт в Bundle parcelable **`ru.esm.tspiot.driver.api.model.ean.EanCheckResponse`**.
+Сервер кладёт в Bundle parcelable **`ru.atol.os.tspiot.driver.api.model.ean.EanCheckResponse`**.
 
 Готовые файлы:
 
-- `app/src/main/java/ru/esm/tspiot/driver/api/model/ean/EanCheckResponse.java`
-- `app/src/main/java/ru/esm/tspiot/driver/api/model/ean/EanCheckResult.java`
-- `app/src/main/aidl/ru/esm/tspiot/driver/api/model/ean/EanCheckResponse.aidl`
-- `app/src/main/aidl/ru/esm/tspiot/driver/api/model/ean/EanCheckResult.aidl`
+- `app/src/atol/java/ru/atol/os/tspiot/driver/api/model/ean/EanCheckResponse.java`
+- `app/src/atol/java/ru/atol/os/tspiot/driver/api/model/ean/EanCheckResult.java`
+- `app/src/atol/java/ru/atol/os/tspiot/driver/api/model/ean/GtinCheckError.java`
+- `app/src/atol/aidl/ru/atol/os/tspiot/driver/api/model/ean/EanCheckResponse.aidl`
+- `app/src/atol/aidl/ru/atol/os/tspiot/driver/api/model/ean/EanCheckResult.aidl`
+- `app/src/atol/aidl/ru/atol/os/tspiot/driver/api/model/ean/GtinCheckError.aidl`
 
 В `build.gradle` модуля включите AIDL: `buildFeatures { aidl = true }`.
 
@@ -137,9 +145,9 @@ fun disconnect(context: Context) {
 import android.os.Build
 import android.os.Bundle
 import ru.atol.os.tspiot.driver.api.callback.IBundleResultCallback
-import ru.esm.tspiot.driver.api.model.ean.EanCheckItem
-import ru.esm.tspiot.driver.api.model.ean.EanCheckRequest
-import ru.esm.tspiot.driver.api.model.ean.EanCheckResponse
+import ru.atol.os.tspiot.driver.api.model.ean.EanCheckItem
+import ru.atol.os.tspiot.driver.api.model.ean.EanCheckRequest
+import ru.atol.os.tspiot.driver.api.model.ean.EanCheckResponse
 
 private const val BUNDLE_KEY = "key"
 
@@ -158,6 +166,7 @@ fun eanCheck(request: EanCheckRequest) {
             }
             // response.results: List<EanCheckResult>
             // response.hasBlockedItems: Boolean
+            // response.error: GtinCheckError? (code, message)
         }
 
         override fun onError(code: Int, message: String?) {
@@ -181,8 +190,9 @@ fun eanCheck(request: EanCheckRequest) {
 
 | Поле | Тип | Смысл |
 | --- | --- | --- |
-| `results` | `List<EanCheckResult>` | Результаты по каждой позиции |
-| `hasBlockedItems` | `boolean` | Есть хотя бы одна заблокированная позиция |
+| `results` | `List<EanCheckResult>` | Результаты по каждой позиции. Список может отсутствовать |
+| `hasBlockedItems` | `boolean` | Есть хотя бы одна заблокированная позиция. Геттер `getHasBlockedItems()` |
+| `error` | `GtinCheckError?` | Ошибка проверки целиком. Геттер `getError()`. `null`, если ошибки нет |
 
 `EanCheckResult`:
 
@@ -190,8 +200,17 @@ fun eanCheck(request: EanCheckRequest) {
 | --- | --- | --- |
 | `itemId` | `String` | Идентификатор позиции из запроса |
 | `gtin` | `String` | EAN/GTIN |
-| `blocked` | `boolean` | Признак блокировки |
-| `pg` | `Integer?` | Товарная группа (может отсутствовать) |
+| `blocked` | `boolean` | Признак блокировки. Геттер `isBlocked()` |
+| `pg` | `Integer?` | Товарная группа. Геттер `getPg()`, может отсутствовать |
+
+`GtinCheckError`:
+
+| Поле | Тип | Смысл |
+| --- | --- | --- |
+| `code` | `int` | Код ошибки. Геттер `getCode()` |
+| `message` | `String` | Текст. Геттер `getMessage()` |
+
+В `Parcel` у `error` сначала пишется `int`: `0` — поля нет, `1` — следом parcelable. Пакет `GtinCheckError` — `ru.atol.os.tspiot.driver.api.model.ean`, тот же, что у запроса и ответа.
 
 Пустой `items`: сервер может **не вызвать** колбэк. Не передавайте пустой список.
 

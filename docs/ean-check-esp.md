@@ -1,6 +1,10 @@
-# eanCheck — интеграция для flavor **mspos** (остальные терминалы)
+# eanCheck — интеграция для flavor **esp** (остальные терминалы)
 
 Проверка EAN/GTIN через AIDL-сервис `IPiotManager` ТС ПИоТ на терминалах, отличных от Атол (пакет `ru.esp.tspiot`).
+
+Полный контракт `IPiotManager` (остальные методы, `KktInfo`, чек, ошибки) — в [ipiot-manager.md](ipiot-manager.md). Общие правила bind и Bundle — в [connection.md](connection.md).
+
+Этот `eanCheck` не совпадает с `IEsmService.eanCheck`: там на вход `List<String>`, а ответ — `ru.esp.esm.api.model.EanCheckResponse` (`gtin`, `EANblocked`, `message`). См. [iesm-service.md](iesm-service.md).
 
 Пакет сервиса: `ru.esp.tspiot`  
 Action: `ru.esm.tspiot.action.ACTION_PIOT_MANAGER`  
@@ -74,8 +78,10 @@ AIDL/Java-модели (пакет `ru.esm.tspiot.driver.api.model.ean`):
 
 - `app/src/main/java/ru/esm/tspiot/driver/api/model/ean/EanCheckResponse.java`
 - `app/src/main/java/ru/esm/tspiot/driver/api/model/ean/EanCheckResult.java`
+- `app/src/main/java/ru/esm/tspiot/driver/api/model/ean/GtinCheckError.java`
 - `app/src/main/aidl/ru/esm/tspiot/driver/api/model/ean/EanCheckResponse.aidl`
 - `app/src/main/aidl/ru/esm/tspiot/driver/api/model/ean/EanCheckResult.aidl`
+- `app/src/main/aidl/ru/esm/tspiot/driver/api/model/ean/GtinCheckError.aidl`
 
 В `build.gradle` модуля включите AIDL: `buildFeatures { aidl = true }`.
 
@@ -159,6 +165,7 @@ fun eanCheck(request: EanCheckRequest) {
             }
             // response.results: List<EanCheckResult>
             // response.hasBlockedItems: Boolean
+            // response.error: GtinCheckError? (code, message)
         }
 
         override fun onError(code: Int, message: String?) {
@@ -182,8 +189,9 @@ fun eanCheck(request: EanCheckRequest) {
 
 | Поле | Тип | Смысл |
 | --- | --- | --- |
-| `results` | `List<EanCheckResult>` | Результаты по каждой позиции |
-| `hasBlockedItems` | `boolean` | Есть хотя бы одна заблокированная позиция |
+| `results` | `List<EanCheckResult>` | Результаты по каждой позиции. Список может отсутствовать |
+| `hasBlockedItems` | `boolean` | Есть хотя бы одна заблокированная позиция. Геттер `getHasBlockedItems()` |
+| `error` | `GtinCheckError?` | Ошибка проверки целиком. Геттер `getError()`. `null`, если ошибки нет |
 
 `EanCheckResult`:
 
@@ -191,8 +199,17 @@ fun eanCheck(request: EanCheckRequest) {
 | --- | --- | --- |
 | `itemId` | `String` | Идентификатор позиции из запроса |
 | `gtin` | `String` | EAN/GTIN |
-| `blocked` | `boolean` | Признак блокировки |
-| `pg` | `Integer?` | Товарная группа (может отсутствовать) |
+| `blocked` | `boolean` | Признак блокировки. Геттер `isBlocked()` |
+| `pg` | `Integer?` | Товарная группа. Геттер `getPg()`, может отсутствовать |
+
+`GtinCheckError`:
+
+| Поле | Тип | Смысл |
+| --- | --- | --- |
+| `code` | `int` | Код ошибки. Геттер `getCode()` |
+| `message` | `String` | Текст. Геттер `getMessage()` |
+
+В `Parcel` у `error` сначала пишется `int`: `0` — поля нет, `1` — следом parcelable.
 
 Пустой `items`: сервер может **не вызвать** колбэк. Не передавайте пустой список.
 

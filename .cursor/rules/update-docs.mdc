@@ -1,0 +1,19 @@
+---
+description: Обновлять docs при изменении AIDL-контрактов и разбора запросов
+alwaysApply: true
+---
+
+# Документация контрактов
+
+Источник правды для внешних разработчиков — каталог `docs/`. Корневой `README.md` только ссылается на него и не дублирует сигнатуры.
+
+При изменении AIDL, Parcelable-моделей, action, пакетов сервисов, ключа Bundle или разбора запроса и ответа обновите соответствующий документ в том же изменении.
+
+| Код | Документ |
+| --- | --- |
+| `app/src/main/aidl/ru/esp/esm/`, `app/src/main/java/ru/esp/esm/` | `docs/iesm-service.md` |
+| `IPiotManager` и модели `driver/api` в `main` и `atol` | `docs/ipiot-manager.md`, при `eanCheck` ещё `docs/ean-check-atol.md` и `docs/ean-check-esp.md` |
+| `IMarkingManager` и модели `api/model` во flavor `esp` и `atol` | `docs/imarking-manager.md` |
+| Action, `setPackage`, `<queries>`, ключ Bundle | `docs/connection.md` и таблица в `docs/README.md` |
+
+Меняйте описание поля, версии и примера вызова, а не только имя метода. Пакет модели на Атол и на остальных терминалах указывайте раздельно.

@@ -55,9 +55,9 @@ android {
             dimension = "cashier-product"
             minSdk = libs.versions.android.minSdkAtol.get().toInt()
         }
-        create("mspos") {
+        create("esp") {
             dimension = "cashier-product"
-            minSdk = libs.versions.android.minSdkMspos.get().toInt()
+            minSdk = libs.versions.android.minSdkEsp.get().toInt()
         }
     }
 }
