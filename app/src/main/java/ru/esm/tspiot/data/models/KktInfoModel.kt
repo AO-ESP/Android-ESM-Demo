@@ -1,5 +1,8 @@
 package ru.esm.tspiot.data.models
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class KktInfoModel(
     val fnSerial: String? = null,
     val kktInn: String? = null,

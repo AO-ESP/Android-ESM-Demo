@@ -38,8 +38,8 @@ import ru.esm.tspiot.data.models.ReceiptInfoModel
 import ru.esm.tspiot.ui.navigation.AppRoute
 import ru.esm.tspiot.ui.navigation.LocalNavController
 import ru.esm.tspiot.ui.navigation.createPreviewNavController
-import ru.esm.tspiot.ui.viewmodels.MainViewModel
 import ru.esm.tspiot.ui.viewmodels.PiotScreenManageConsumer
+import ru.esm.tspiot.ui.viewmodels.PiotViewModel
 
 @Preview
 @Composable
@@ -65,7 +65,7 @@ fun PiotScreenPreview() {
 @Composable
 fun PiotScreen(
     navController: NavHostController = LocalNavController.current,
-    viewModel: MainViewModel = hiltViewModel(),
+    viewModel: PiotViewModel = hiltViewModel(),
 ) {
     val isConnected by viewModel.isPiotManagerConnected.collectAsStateWithLifecycle()
 
@@ -202,6 +202,26 @@ fun PiotScreenContent(
                                 ReceiptImcDataModel(
                                     ki = "ki", // код идентификации
                                     ofdStatus = "ofdStatus", // статус ОФД
+                                )
+                            )
+                        ),
+                        getDefaultKktInfoModel()
+                    )
+                }
+            ) {
+                Text("Set Receipt Info")
+            }
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                enabled = isConnected,
+                onClick = {
+                    manageConsumer.onSetReceiptInfoModelAction(
+                        ReceiptInfoModel(
+                            "receiptId", // номер чека
+                            listOf(
+                                ReceiptImcDataModel(
+                                    ki = "ki", // код идентификации
+                                    ofdStatus = "ofdStatus", // статус ОФД
                                     goodsInfo = GoodsInfoModel(
                                         goodsName = "Молоко",
                                         price = 89.9,
@@ -229,7 +249,7 @@ fun PiotScreenContent(
                     )
                 }
             ) {
-                Text("Set Receipt Info")
+                Text("Set Receipt Info + Goods Info")
             }
             Button(
                 modifier = Modifier.fillMaxWidth(),

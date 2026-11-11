@@ -1,5 +1,8 @@
 package ru.esm.tspiot.data.models
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class ErrorInfoModel(
     val code: Int = 0,
     val message: String? = null,

@@ -382,7 +382,7 @@ override fun onSuccess(bundle: Bundle) {
 
 ## eanCheck
 
-Версия 4, ЕСМ v1.*, ещё не в релизе. Проверка EAN в ЛМ ЧЗ.
+Версия 4, ЕСМ v1.4.4. Проверка EAN в ЛМ ЧЗ.
 
 Это отдельный контракт от `IPiotManager.eanCheck`. Здесь на вход список строк, на выход другая модель с другими полями. Интеграция через ТС ПИоТ описана в [ipiot-manager.md](ipiot-manager.md) и в файлах `ean-check-*.md`.
 

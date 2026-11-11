@@ -1,5 +1,8 @@
 package ru.esm.tspiot.data.models
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class GoodsInfoModel(
     val goodsName: String? = null,
     val price: Double = -1.0,

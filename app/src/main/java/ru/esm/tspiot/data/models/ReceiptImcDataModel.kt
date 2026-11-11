@@ -1,5 +1,8 @@
 package ru.esm.tspiot.data.models
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class ReceiptImcDataModel(
     val ki: String? = null,
     val ofdStatus: String? = null,
