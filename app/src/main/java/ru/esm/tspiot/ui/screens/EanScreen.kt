@@ -1,5 +1,6 @@
 package ru.esm.tspiot.ui.screens
 
+import android.Manifest
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,12 +22,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -35,7 +40,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import ru.esm.tspiot.domain.PiotResult
+import ru.esm.tspiot.domain.ScanResult
 import ru.esm.tspiot.driver.api.model.ean.EanCheckItem
 import ru.esm.tspiot.driver.api.model.ean.EanCheckRequest
 import ru.esm.tspiot.ui.items.ResultDisplay
@@ -75,7 +84,7 @@ fun EanScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun EanScreenContent(
     navController: NavHostController,
@@ -85,9 +94,23 @@ fun EanScreenContent(
     onDisconnect: () -> Unit,
     onEanCheck: (EanCheckRequest) -> Unit,
 ) {
-    val drafts = remember { mutableStateListOf<EanDraft>().apply { addAll(defaultEanDrafts()) } }
-    var nextKey by remember { mutableIntStateOf(defaultEanDrafts().size + 1) }
+    val drafts = rememberSaveable(saver = eanDraftListSaver) {
+        mutableStateListOf<EanDraft>().apply { addAll(defaultEanDrafts()) }
+    }
+    var nextKey by rememberSaveable { mutableIntStateOf(defaultEanDrafts().size + 1) }
     val canCheck = drafts.any { it.gtin.isNotBlank() }
+    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+    val cameraPermissionState = rememberPermissionState(
+        permission = Manifest.permission.CAMERA
+    )
+
+    LaunchedEffect(savedStateHandle) {
+        savedStateHandle?.getStateFlow<Set<ScanResult>?>("scanResult", null)?.collect { result ->
+            if (result.isNullOrEmpty()) return@collect
+            nextKey = appendScannedEans(drafts, nextKey, result)
+            savedStateHandle.remove<Set<ScanResult>?>("scanResult")
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -138,6 +161,27 @@ fun EanScreenContent(
                             onRemove = { drafts.removeAll { it.key == draft.key } },
                         )
                     }
+                }
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        savedStateHandle?.remove<Set<ScanResult>?>("scanResult")
+                        if (cameraPermissionState.status.isGranted) {
+                            navController.navigate(AppRoute.EanScannerScreenRoute.id) {
+                                popUpTo(AppRoute.EanScreenRoute.id) {
+                                    inclusive = false
+                                }
+                            }
+                        } else {
+                            navController.navigate(AppRoute.PermissionScreenRoute.id) {
+                                popUpTo(AppRoute.EanScreenRoute.id) {
+                                    inclusive = false
+                                }
+                            }
+                        }
+                    }
+                ) {
+                    Text("Сканировать EAN")
                 }
                 Button(
                     modifier = Modifier.fillMaxWidth(),
@@ -215,6 +259,49 @@ private fun defaultEanDrafts(): List<EanDraft> = listOf(
     EanDraft(key = 1, itemId = "1", gtin = "4690228020056"),
     EanDraft(key = 2, itemId = "3", gtin = "4600682003847"),
 )
+
+private val eanDraftListSaver = listSaver<SnapshotStateList<EanDraft>, String>(
+    save = { drafts ->
+        drafts.flatMap { draft ->
+            listOf(draft.key.toString(), draft.itemId, draft.gtin)
+        }
+    },
+    restore = { saved ->
+        saved.chunked(3).map { parts ->
+            EanDraft(
+                key = parts[0].toInt(),
+                itemId = parts[1],
+                gtin = parts[2],
+            )
+        }.toMutableStateList()
+    },
+)
+
+private fun appendScannedEans(
+    drafts: MutableList<EanDraft>,
+    nextKey: Int,
+    codes: Set<ScanResult>,
+): Int {
+    var key = nextKey
+    codes.map { it.text.trim() }
+        .filter { it.isNotEmpty() }
+        .forEach { gtin ->
+            drafts.add(
+                EanDraft(
+                    key = key,
+                    itemId = nextItemId(drafts),
+                    gtin = gtin,
+                )
+            )
+            key += 1
+        }
+    return key
+}
+
+private fun nextItemId(drafts: List<EanDraft>): String {
+    val maxId = drafts.mapNotNull { it.itemId.toIntOrNull() }.maxOrNull() ?: 0
+    return (maxId + 1).toString()
+}
 
 private fun updateDraft(
     drafts: MutableList<EanDraft>,
