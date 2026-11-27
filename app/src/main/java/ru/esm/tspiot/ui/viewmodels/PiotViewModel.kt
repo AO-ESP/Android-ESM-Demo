@@ -5,7 +5,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -15,6 +17,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.put
 import ru.esm.tspiot.data.PiotManagerClient
 import ru.esm.tspiot.data.models.CashierInfoModel
+import ru.esm.tspiot.domain.PiotResult
 import ru.esm.tspiot.data.models.ErrorRequestModel
 import ru.esm.tspiot.data.models.ImcData
 import ru.esm.tspiot.data.models.IsmNoticeInfoModel
@@ -29,6 +32,9 @@ class PiotViewModel @Inject constructor(
 ) : ViewModel() {
 
     val isPiotManagerConnected: StateFlow<Boolean> = piotManagerClient.isConnected
+
+    private val _lastCallResult = MutableStateFlow<String?>(null)
+    val lastCallResult: StateFlow<String?> = _lastCallResult.asStateFlow()
 
     fun connectToPiotManager() {
         val intent = if (BuildConfig.FLAVOR == "atol") {
@@ -136,6 +142,36 @@ class PiotViewModel @Inject constructor(
         }
     }
 
+    fun setReturnReceiptInfo(info: ReceiptInfoModel, kktInfo: KktInfoModel) {
+        viewModelScope.launch {
+            logSentEvent(
+                "setReturnReceiptInfo",
+                buildJsonObject {
+                    put("info", info.toJsonElement())
+                    put("kktInfo", kktInfo.toJsonElement())
+                }
+            )
+            piotManagerClient.setReturnReceiptInfo(info, kktInfo)
+        }
+    }
+
+    fun getAidlVersion() {
+        val result = piotManagerClient.getAidlVersion()
+        val text = formatIntResult("getAidlVersion", result)
+        Log.d(TAG, text)
+        _lastCallResult.value = text
+    }
+
+    fun getEanCheckTimeout() {
+        viewModelScope.launch {
+            _lastCallResult.value = "getEanCheckTimeout: запрос"
+            val result = piotManagerClient.getEanCheckTimeout()
+            val text = formatIntResult("getEanCheckTimeout", result, "мс")
+            Log.d(TAG, text)
+            _lastCallResult.value = text
+        }
+    }
+
     fun setKktInfo(kktInfo: KktInfoModel) {
         viewModelScope.launch {
             logSentEvent(
@@ -185,6 +221,11 @@ class PiotViewModel @Inject constructor(
             onSetReceiptInfoModelAction = { info, kktInfo ->
                 setReceiptInfo(info, kktInfo)
             },
+            onSetReturnReceiptInfoAction = { info, kktInfo ->
+                setReturnReceiptInfo(info, kktInfo)
+            },
+            onGetAidlVersion = { getAidlVersion() },
+            onGetEanCheckTimeout = { getEanCheckTimeout() },
             onSetKktInfoModelAction = { kktInfo ->
                 setKktInfo(kktInfo)
             },
@@ -198,6 +239,18 @@ class PiotViewModel @Inject constructor(
         return when (BuildConfig.FLAVOR) {
             "atol" -> ATOL_PACKAGE
             else -> OTHER_PACKAGE
+        }
+    }
+
+    private fun formatIntResult(method: String, result: PiotResult<Int>, suffix: String = ""): String {
+        return when (result) {
+            is PiotResult.Success -> {
+                val unit = if (suffix.isEmpty()) "" else " $suffix"
+                "$method: ${result.data}$unit"
+            }
+            is PiotResult.Error -> "$method: ошибка ${result.code}, ${result.message}"
+            PiotResult.ServiceUnavailable -> "$method: сервис недоступен"
+            PiotResult.Loading -> "$method: запрос"
         }
     }
 
@@ -248,6 +301,12 @@ data class PiotScreenManageConsumer(
         info: ReceiptInfoModel,
         KktInfoModel: KktInfoModel
     ) -> Unit,
+    val onSetReturnReceiptInfoAction: (
+        info: ReceiptInfoModel,
+        KktInfoModel: KktInfoModel
+    ) -> Unit,
+    val onGetAidlVersion: () -> Unit,
+    val onGetEanCheckTimeout: () -> Unit,
     val onSetKktInfoModelAction: (
         KktInfoModel: KktInfoModel
     ) -> Unit,

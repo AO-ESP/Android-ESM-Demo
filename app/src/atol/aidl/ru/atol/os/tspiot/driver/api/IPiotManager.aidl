@@ -3,6 +3,7 @@ package ru.atol.os.tspiot.driver.api;
 import ru.atol.os.tspiot.driver.api.callback.IResultCallback;
 import ru.atol.os.tspiot.driver.api.callback.IBoolCallback;
 import ru.atol.os.tspiot.driver.api.callback.IBundleResultCallback;
+import ru.atol.os.tspiot.driver.api.callback.IIntCallback;
 import ru.atol.os.tspiot.driver.api.model.IsmNoticeInfo;
 import ru.atol.os.tspiot.driver.api.model.ErrorRequest;
 import ru.atol.os.tspiot.driver.api.model.CashierInfo;
@@ -21,4 +22,7 @@ interface IPiotManager {
     void setKktInfo(in IResultCallback callback, in KktInfo kktInfo);
     void setCashier(in IResultCallback callback, in CashierInfo cashierInfo, in KktInfo kktInfo);
     void eanCheck(in IBundleResultCallback callback, in EanCheckRequest request);
+    void getEanCheckTimeout(in IIntCallback callback);
+    int getAidlVersion();
+    void setReturnReceiptInfo(in IResultCallback callback, in ReceiptInfo info, in KktInfo kktInfo);
 }

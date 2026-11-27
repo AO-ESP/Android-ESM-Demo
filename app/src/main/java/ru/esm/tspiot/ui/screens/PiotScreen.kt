@@ -56,6 +56,9 @@ fun PiotScreenPreview() {
             { _, _ -> },
             { _ -> },
             { _, _ -> },
+            { _, _ -> },
+            {},
+            {},
             { _ -> },
             { _, _ -> },
         )
@@ -68,10 +71,12 @@ fun PiotScreen(
     viewModel: PiotViewModel = hiltViewModel(),
 ) {
     val isConnected by viewModel.isPiotManagerConnected.collectAsStateWithLifecycle()
+    val lastCallResult by viewModel.lastCallResult.collectAsStateWithLifecycle()
 
     PiotScreenContent(
         navController = navController,
         isConnected = isConnected,
+        lastCallResult = lastCallResult,
         manageConsumer = viewModel.getScreenManageConsumer()
     )
 }
@@ -81,7 +86,8 @@ fun PiotScreen(
 fun PiotScreenContent(
     navController: NavHostController,
     isConnected: Boolean,
-    manageConsumer: PiotScreenManageConsumer
+    manageConsumer: PiotScreenManageConsumer,
+    lastCallResult: String? = null,
 ) {
 
     Scaffold(
@@ -250,6 +256,43 @@ fun PiotScreenContent(
                 }
             ) {
                 Text("Set Receipt Info + Goods Info")
+            }
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                enabled = isConnected,
+                onClick = {
+                    manageConsumer.onSetReturnReceiptInfoAction(
+                        ReceiptInfoModel(
+                            "receiptId",
+                            listOf(
+                                ReceiptImcDataModel(
+                                    ki = "ki",
+                                    ofdStatus = "ofdStatus",
+                                )
+                            )
+                        ),
+                        getDefaultKktInfoModel()
+                    )
+                }
+            ) {
+                Text("Set Return Receipt Info")
+            }
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                enabled = isConnected,
+                onClick = manageConsumer.onGetAidlVersion
+            ) {
+                Text("Get AIDL Version")
+            }
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                enabled = isConnected,
+                onClick = manageConsumer.onGetEanCheckTimeout
+            ) {
+                Text("Get EAN Check Timeout")
+            }
+            if (lastCallResult != null) {
+                Text(text = lastCallResult)
             }
             Button(
                 modifier = Modifier.fillMaxWidth(),

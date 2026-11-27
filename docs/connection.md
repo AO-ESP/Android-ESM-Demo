@@ -95,8 +95,9 @@ fun disconnect(context: Context) {
 | --- | --- | --- | --- |
 | `ru.esp.esm.api.IBundleResultCallback` | все методы `IEsmService`, кроме `getAidlVersion` | `onSuccess(Bundle)` | `onError(int code, String message)` |
 | `ru.esm.tspiot.driver.api.callback.IBundleResultCallback` или `ru.atol.os.tspiot.driver.api.callback.IBundleResultCallback` | `IPiotManager.eanCheck` | `onSuccess(Bundle)` | `onError(int code, String message)` |
-| `IResultCallback` того же пакета, что `IPiotManager` | `setImcData`, `setError`, `setIsmNotice`, `setRawEvent`, `setReceiptInfo`, `setKktInfo`, `setCashier` | `onSuccess()` | `onFailure(int code, String message)` |
+| `IResultCallback` того же пакета, что `IPiotManager` | `setImcData`, `setError`, `setIsmNotice`, `setRawEvent`, `setReceiptInfo`, `setReturnReceiptInfo`, `setKktInfo`, `setCashier` | `onSuccess()` | `onFailure(int code, String message)` |
 | `IBoolCallback` того же пакета | `setShiftState` | `onSuccess(boolean status)` | `onFailure(int code, String message)` |
+| `IIntCallback` того же пакета | `IPiotManager.getEanCheckTimeout` | `onSuccess(int value)`, миллисекунды | `onFailure(int code, String message)` |
 | `IBundleResultCallback` пакета `IMarkingManager` | `requestCheck` | `onSuccess(Bundle)` | `onError(int code, String message)` |
 
 `code` и `message` задаёт сервис. Клиент демо дополнительно использует свои коды, если вызов не дошёл до сервиса:
@@ -104,7 +105,7 @@ fun disconnect(context: Context) {
 | Код на стороне демо | Когда |
 | --- | --- |
 | `-1` | `RemoteException` или другое исключение при вызове |
-| `-2` | исключение `getAidlVersion()`, которое не является `RemoteException` |
+| `-2` | исключение синхронного `getAidlVersion()` у `IEsmService` или `IPiotManager`, которое не является `RemoteException` |
 
 Эти два кода не приходят из `onError` сервиса. Сервис в `onError` / `onFailure` передаёт свой `code`.
 
