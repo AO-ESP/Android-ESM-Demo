@@ -1,6 +1,6 @@
 # IPiotManager
 
-Интерфейс ТС ПИоТ для кассовых событий: состояние смены, данные КМ, ошибки, уведомления ИСМ, сырое событие, закрытый чек, сведения о ККТ и кассире, проверка EAN/GTIN.
+Интерфейс ТС ПИоТ для кассовых событий: состояние смены, данные КМ, ошибки, уведомления ИСМ, сырое событие, закрытый чек и чек возврата, сведения о ККТ и кассире, проверка EAN/GTIN и таймаут этой проверки.
 
 Методы на flavor `atol` и `esp` совпадают. Пакеты интерфейса, колбэков и моделей разные, включая EAN. На Атол запрос и ответ `eanCheck` — `ru.atol.os.tspiot.driver.api.model.ean`. Во flavor `esp` — `ru.esm.tspiot.driver.api.model.ean`. Поля одинаковые. Подмена пакета ломает разбор `Parcel`.
 
@@ -32,10 +32,30 @@ interface IPiotManager {
     void setKktInfo(in IResultCallback callback, in KktInfo kktInfo);
     void setCashier(in IResultCallback callback, in CashierInfo cashierInfo, in KktInfo kktInfo);
     void eanCheck(in IBundleResultCallback callback, in EanCheckRequest request);
+    void getEanCheckTimeout(in IIntCallback callback);
+    int getAidlVersion();
+    void setReturnReceiptInfo(in IResultCallback callback, in ReceiptInfo info, in KktInfo kktInfo);
 }
 ```
 
-Три колбэка:
+Порядок методов в AIDL совпадает с сервисом и задаёт коды транзакций Binder. Новые методы дописываются в конец: `getEanCheckTimeout`, затем `getAidlVersion`, затем `setReturnReceiptInfo`. Вставка в середину сдвигает коды, и вызов попадёт в другой метод сервиса.
+
+## Версия интерфейса
+
+`getAidlVersion()` синхронный, колбэк не использует. Текущий сервис возвращает `2`.
+
+| Версия | Состав |
+| --- | --- |
+| нет метода | Методы по `eanCheck` включительно |
+| 2 | плюс `getEanCheckTimeout`, `getAidlVersion`, `setReturnReceiptInfo` |
+
+```text
+int getAidlVersion();
+```
+
+Вызов метода, которого нет в AIDL установленного ТС ПИоТ, завершается на клиенте `RemoteException` или `UnsupportedOperationException` с текстом `Method not supported. Old PiotService?`. В `onFailure` это не приходит. Перед `getEanCheckTimeout` и `setReturnReceiptInfo` читайте `getAidlVersion()` и вызывайте их при значении `2` и выше.
+
+Четыре колбэка:
 
 ```aidl
 interface IBoolCallback {
@@ -52,7 +72,14 @@ interface IBundleResultCallback {
     void onSuccess(in Bundle bundle);
     void onError(int code, in String message);
 }
+
+interface IIntCallback {
+    void onSuccess(int value);
+    void onFailure(int code, in String message);
+}
 ```
+
+`getEanCheckTimeout` отвечает через `IIntCallback`. `value` — целое число, для этого метода миллисекунды. `onFailure.message` может быть `null`.
 
 `onSuccess()` у `IResultCallback` без тела: сервис подтвердил приём. Данные назад не приходят. `onFailure.message` может быть `null`.
 
@@ -330,6 +357,25 @@ ReceiptImcData(null, null, goodsInfo)
 
 Такая позиция пишет в Parcel только две null-строки, без маркера `goodsInfo`. Чтобы передать реквизиты, `goodsInfo` должен быть не `null`: иначе маркер не пишется и сервер новой версии тоже увидит пустые реквизиты.
 
+## setReturnReceiptInfo
+
+Чек возврата. Запрос и ответ те же, что у `setReceiptInfo`: `ReceiptInfo`, `KktInfo` и пустой `IResultCallback.onSuccess()`. Метод есть начиная с версии `2`.
+
+```text
+void setReturnReceiptInfo(in IResultCallback callback, in ReceiptInfo info, in KktInfo kktInfo);
+```
+
+| Параметр | Тип | Смысл |
+| --- | --- | --- |
+| `info` | `ReceiptInfo` | Идентификатор чека возврата и позиции |
+| `kktInfo` | `KktInfo` | ККТ |
+
+```kotlin
+manager.setReturnReceiptInfo(callback, ReceiptInfo(receiptId, listOf(line)), kktInfo)
+```
+
+Поля `ReceiptInfo` и `ReceiptImcData` описаны выше, в `setReceiptInfo`.
+
 ## setKktInfo
 
 Актуальные сведения о ККТ без другого события.
@@ -434,3 +480,27 @@ manager.eanCheck(callback, request)
 ```
 
 Полный каркас bind и чтения Bundle — в [ean-check-atol.md](ean-check-atol.md) и [ean-check-esp.md](ean-check-esp.md).
+
+## getEanCheckTimeout
+
+Таймаут ожидания ответа локального модуля при проверке GTIN, в миллисекундах. Тем же значением ограничен вызов модуля внутри `eanCheck`. Метод есть начиная с версии `2`.
+
+```text
+void getEanCheckTimeout(in IIntCallback callback);
+```
+
+Аргументов, кроме колбэка, нет. Успех: `onSuccess(int value)`. Это эффективный `lmEanCheckTimeout`: значение, заданное пользователем, иначе значение из ГИС МТ. Если значения нет или оно неположительное, сервис возвращает `450`. Сбой чтения конфигурации приходит в `onFailure` с кодом `-1` или `-2`.
+
+```kotlin
+val callback = object : IIntCallback.Stub() {
+    override fun onSuccess(value: Int) {
+        // value — миллисекунды
+    }
+
+    override fun onFailure(code: Int, message: String?) {
+    }
+}
+manager.getEanCheckTimeout(callback)
+```
+
+Пакет `IIntCallback` совпадает с пакетом остальных колбэков flavor.

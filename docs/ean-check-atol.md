@@ -31,6 +31,8 @@ interface IPiotManager {
 
 Если `IPiotManager` уже подключён, достаточно добавить строку `eanCheck` и import запроса. Остальные методы менеджера можно оставить как есть.
 
+`getEanCheckTimeout` в полном интерфейсе стоит сразу после `eanCheck`. Сигнатура и `IIntCallback` — в [ipiot-manager.md](ipiot-manager.md) и в разделе 7. Фрагмент выше описывает только вызов `eanCheck`.
+
 ### `ru/atol/os/tspiot/driver/api/callback/IBundleResultCallback.aidl`
 
 ```aidl
@@ -228,3 +230,24 @@ eanCheck(
     )
 )
 ```
+
+---
+
+## 7. Таймаут проверки
+
+`getEanCheckTimeout` сообщает, сколько миллисекунд ТС ПИоТ ждёт ответ локального модуля внутри `eanCheck`. Метод есть с версии интерфейса `2` (`getAidlVersion()`). На сервисе без этого метода вызов завершается `RemoteException` / `UnsupportedOperationException` с текстом `Method not supported. Old PiotService?`.
+
+```aidl
+package ru.atol.os.tspiot.driver.api.callback;
+
+interface IIntCallback {
+    void onSuccess(int value);
+    void onFailure(int code, in String message);
+}
+```
+
+```text
+void getEanCheckTimeout(in IIntCallback callback);
+```
+
+`onSuccess(int value)` — таймаут в миллисекундах. Это эффективный `lmEanCheckTimeout`: значение пользователя, иначе значение ГИС МТ. Если значения нет или оно неположительное, сервис возвращает `450`. Сбой чтения конфигурации приходит в `onFailure` с кодом `-1` или `-2`.

@@ -7,7 +7,7 @@
 Кратко:
 
 - `IEsmService` — проверка КИ и EAN, продажа и возврат в ЛМ ЧЗ, сведения о ККТ. Action `ru.esp.esm.action.ACTION_ESM_SERVICE`.
-- `IPiotManager` — события кассы и проверка EAN/GTIN. Action зависит от терминала.
+- `IPiotManager` — события кассы, чек возврата, проверка EAN/GTIN и таймаут этой проверки. Action зависит от терминала.
 - `IMarkingManager` — устаревшая проверка марок. Заменяется `IEsmService.codesCheck`.
 
 Пакет процесса: `ru.atol.os.tspiot` на терминалах Атол (flavor `atol`), `ru.esp.tspiot` на остальных (flavor `esp`). `Intent.setPackage` обязателен.

@@ -3,6 +3,7 @@ package ru.esm.tspiot.driver.api;
 import ru.esm.tspiot.driver.api.callback.IBoolCallback;
 import ru.esm.tspiot.driver.api.callback.IResultCallback;
 import ru.esm.tspiot.driver.api.callback.IBundleResultCallback;
+import ru.esm.tspiot.driver.api.callback.IIntCallback;
 import ru.esm.tspiot.driver.api.model.KktInfo;
 import ru.esm.tspiot.driver.api.model.CashierInfo;
 import ru.esm.tspiot.driver.api.model.ErrorInfo;
@@ -21,4 +22,7 @@ interface IPiotManager {
     void setKktInfo(in IResultCallback callback, in KktInfo kktInfo);
     void setCashier(in IResultCallback callback, in CashierInfo cashierInfo, in KktInfo kktInfo);
     void eanCheck(in IBundleResultCallback callback, in EanCheckRequest request);
+    void getEanCheckTimeout(in IIntCallback callback);
+    int getAidlVersion();
+    void setReturnReceiptInfo(in IResultCallback callback, in ReceiptInfo info, in KktInfo kktInfo);
 }

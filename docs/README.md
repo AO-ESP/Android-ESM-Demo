@@ -9,7 +9,7 @@
 | Сервис | Назначение | Статус |
 | --- | --- | --- |
 | [`IEsmService`](iesm-service.md) | Проверка КИ и EAN, продажа и возврат в ЛМ ЧЗ, сведения о ЕСМ / ККТ / ЛМ | Актуальный |
-| [`IPiotManager`](ipiot-manager.md) | События кассы: смена, чек, кассир, ККТ, ошибки, уведомления ИСМ, проверка EAN/GTIN | Актуальный |
+| [`IPiotManager`](ipiot-manager.md) | События кассы: смена, чек и чек возврата, кассир, ККТ, ошибки, уведомления ИСМ, проверка EAN/GTIN и её таймаут | Актуальный |
 | [`IMarkingManager`](imarking-manager.md) | Проверка марок | Устарел, заменяется `IEsmService.codesCheck` |
 
 Общие правила `bindService`, `<queries>`, ключа Bundle и `classLoader` — в [connection.md](connection.md).
@@ -51,6 +51,17 @@
 | 4 | плюс `eanCheck`; в `KktInfoExternal` поле `licenceTill`; в `CodesCheckResponse` список `eans`; в `codesCheck` можно передавать и КИ, и EAN/GTIN | ЕСМ v1.*, ещё не в релизе. Номер версии продукта нужно сверить с релизом ЕСМ |
 
 Вызов метода более новой версии на старом сервисе завершается `RemoteException` / `UnsupportedOperationException` на стороне клиента. Перед вызовом `getInfo` и `eanCheck` проверяйте `getAidlVersion()`.
+
+## Версии `IPiotManager`
+
+`getAidlVersion()` синхронный. Текущий сервис возвращает `2`.
+
+| Версия | Состав |
+| --- | --- |
+| нет метода | Методы по `eanCheck` включительно |
+| 2 | плюс `getEanCheckTimeout`, `getAidlVersion`, `setReturnReceiptInfo` |
+
+Перед `getEanCheckTimeout` и `setReturnReceiptInfo` проверяйте `getAidlVersion()`. Сигнатуры и смысл полей — в [ipiot-manager.md](ipiot-manager.md).
 
 ## Как перенести контракт в своё приложение
 

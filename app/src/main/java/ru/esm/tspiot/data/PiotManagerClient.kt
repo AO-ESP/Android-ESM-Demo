@@ -31,7 +31,10 @@ interface PiotManagerClient {
     suspend fun setIsmNotice(info: IsmNoticeInfoModel, kktInfo: KktInfoModel)
     suspend fun setRawEvent(event: String)
     suspend fun setReceiptInfo(info: ReceiptInfoModel, kktInfo: KktInfoModel)
+    suspend fun setReturnReceiptInfo(info: ReceiptInfoModel, kktInfo: KktInfoModel)
     suspend fun setKktInfo(kktInfo: KktInfoModel)
     suspend fun setCashier(cashierInfo: CashierInfoModel, kktInfo: KktInfoModel)
     suspend fun eanCheck(request: EanCheckRequest): PiotResult<EanCheckResponse>
+    suspend fun getEanCheckTimeout(): PiotResult<Int>
+    fun getAidlVersion(): PiotResult<Int>
 }

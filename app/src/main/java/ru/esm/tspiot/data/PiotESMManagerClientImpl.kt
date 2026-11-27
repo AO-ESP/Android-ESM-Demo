@@ -26,6 +26,7 @@ import ru.esm.tspiot.domain.PiotResult
 import ru.esm.tspiot.driver.api.IPiotManager
 import ru.esm.tspiot.driver.api.callback.IBoolCallback
 import ru.esm.tspiot.driver.api.callback.IBundleResultCallback
+import ru.esm.tspiot.driver.api.callback.IIntCallback
 import ru.esm.tspiot.driver.api.callback.IResultCallback
 import ru.esm.tspiot.driver.api.model.ean.EanCheckRequest
 import ru.esm.tspiot.driver.api.model.ean.EanCheckResponse
@@ -132,6 +133,15 @@ class PiotESMManagerClientImpl @Inject constructor(
             )
         }
 
+    override suspend fun setReturnReceiptInfo(info: ReceiptInfoModel, kktInfo: KktInfoModel) =
+        executeUnitCallback { m, cb ->
+            m.setReturnReceiptInfo(
+                cb,
+                info.mapToESMModel(),
+                kktInfo.mapToESMModel()
+            )
+        }
+
     override suspend fun setKktInfo(kktInfo: KktInfoModel) =
         executeUnitCallback { m, cb -> m.setKktInfo(cb, kktInfo.mapToESMModel()) }
 
@@ -152,6 +162,41 @@ class PiotESMManagerClientImpl @Inject constructor(
             PiotResult.Loading -> PiotResult.Loading
             PiotResult.ServiceUnavailable -> PiotResult.ServiceUnavailable
         }
+    }
+
+    override suspend fun getEanCheckTimeout(): PiotResult<Int> {
+        val manager = synchronized(lock) { iPiotManager }
+            ?: return PiotResult.ServiceUnavailable
+        return suspendCancellableCoroutine { continuation ->
+            val callback = object : IIntCallback.Stub() {
+                override fun onSuccess(value: Int) {
+                    if (continuation.isActive) continuation.resume(PiotResult.Success(value))
+                }
+
+                override fun onFailure(code: Int, message: String?) {
+                    if (continuation.isActive) continuation.resume(PiotResult.Error(code, message))
+                }
+            }
+            try {
+                manager.getEanCheckTimeout(callback)
+            } catch (e: RemoteException) {
+                if (continuation.isActive) continuation.resume(PiotResult.Error(-1, e.message))
+            } catch (e: Exception) {
+                if (continuation.isActive) continuation.resume(PiotResult.Error(-2, e.message))
+            }
+        }
+    }
+
+    override fun getAidlVersion(): PiotResult<Int> {
+        val manager = synchronized(lock) { iPiotManager }
+            ?: return PiotResult.ServiceUnavailable
+        return runCatching { manager.getAidlVersion() }.fold(
+            onSuccess = { PiotResult.Success(it) },
+            onFailure = { e ->
+                if (e is RemoteException) PiotResult.Error(-1, e.message)
+                else PiotResult.Error(-2, e.message)
+            }
+        )
     }
 
     /**
