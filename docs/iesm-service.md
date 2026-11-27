@@ -74,6 +74,8 @@ int getAidlVersion();
 
 Версия 2. С версии 4 в запрос можно класть и код идентификации, и EAN/GTIN. Ответ с версии 4 дополнительно содержит `eans`. Старый клиент, который не читает хвост `eans`, с новым сервером несовместим по этому полю: `eans` пишется в конец `Parcel` без маркера длины «было/не было». Копируйте модель той версии сервиса, с которой интегрируетесь.
 
+С версии 5 у элемента `Cis` есть необязательные `mode` и `receiptType`, у запроса — необязательный `customerInn`. Они исключают предпроверку EAN в ЛМ ЧЗ. Пустые поля хвост не пишут, и запрос остаётся совместим со старым сервисом. Заполненные поля передавайте только при `getAidlVersion() >= 5`: старый сервис хвост не читает. Демо перед таким запросом само проверяет версию и показывает ошибку, если сервис старше.
+
 ```text
 void codesCheck(in IBundleResultCallback callback, in CodesCheckRequest codes);
 ```
@@ -82,14 +84,17 @@ void codesCheck(in IBundleResultCallback callback, in CodesCheckRequest codes);
 
 ### Запрос `CodesCheckRequest`
 
-Пакет `ru.esp.esm.api.model`. Оба поля обязательны, `null` в конструкторе не принимается.
+Пакет `ru.esp.esm.api.model`. `cisList` и `clientInfo` обязательны, `null` в конструкторе не принимается. `customerInn` необязателен: конструктор из двух аргументов пишет `null`.
 
 | Поле | Тип | Геттер | Смысл |
 | --- | --- | --- | --- |
 | `cisList` | `CisList` | `getCisList()` | Список кодов и часовой пояс |
 | `clientInfo` | `ClientInfo` | `getClientInfo()` | Идентификация кассового ПО |
+| `customerInn` | `String` | `getCustomerInn()` | ИНН покупателя, с версии 5. Непустая строка исключает предпроверку всех EAN запроса. Формат и контрольное число не проверяются. `null` и пустая строка признак не создают и в хвост не пишутся |
 
-Порядок в `Parcel`: сначала `cisList`, затем `clientInfo`, оба как `Parcelable`.
+Порядок в `Parcel`: сначала `cisList`, затем `clientInfo`, оба как `Parcelable`. Хвост исключения пишется после `clientInfo`, только если `customerInn` непустой или у какого-либо элемента заданы `mode` либо `receiptType`.
+
+Хвост: `int` маркер `0x45414E31`, строка `customerInn` (`null` допустим), `int` — число элементов `codesList`, затем для каждого элемента две строки `mode` и `receiptType` (`null`, если поле не задано). `mode` и `receiptType` в `Parcel` самого `Cis` не входят. Если маркера нет, чтение останавливается на `clientInfo`.
 
 #### `CisList`
 
@@ -108,8 +113,12 @@ void codesCheck(in IBundleResultCallback callback, in CodesCheckRequest codes);
 | --- | --- | --- | --- | --- |
 | `cis` | `String` | обязателен | `getCis()` | КИ или, с версии 4, EAN/GTIN |
 | `pg` | `Integer` | nullable | `getPg()` | Товарная группа. `null`, если неизвестна |
+| `mode` | `String` | nullable, с версии 5 | `getMode()` | Исключение предпроверки EAN этого элемента: точно `horeca`, `vend` или `osu` |
+| `receiptType` | `String` | nullable, с версии 5 | `getReceiptType()` | Исключение предпроверки EAN этого элемента: точно `avance` |
 
-`pg == null` — байт `0`. Иначе байт `1` и `int`.
+`pg == null` — байт `0`. Иначе байт `1` и `int`. В `Parcel` `Cis` пишутся только `cis` и `pg`. Старые конструкторы `Cis(String)` и `Cis(String, Integer)` оставляют `mode` и `receiptType` равными `null`.
+
+Достаточно одного корректного признака: `mode`, `receiptType` или непустой `customerInn`. Другое значение `mode` или `receiptType` само по себе исключение не создаёт. Признак действует на распознанный EAN: КМ проверяется штатно. `eanCheck` и постпроверка ДККТ этих полей не получают. На экране `codesCheck` демо одно значение `mode` и `receiptType` применяется ко всем отсканированным кодам; пустое поле уходит как `null`.
 
 #### `ClientInfo`
 
@@ -209,7 +218,8 @@ val request = CodesCheckRequest(
     CisList(
         listOf(
             Cis("010460043993125621JgXJ5.T", 1),
-            Cis("04690604000001"),
+            Cis("4601234567893", null, "horeca", null),
+            Cis("4600682003847", null, null, "avance"),
         ),
         tz = null,
     ),
@@ -220,10 +230,13 @@ val request = CodesCheckRequest(
         clientToken,
         null,
     ),
+    "231513682997",
 )
 
 esmService.codesCheck(callback, request)
 ```
+
+`customerInn` и поля `Cis` можно не передавать: конструктор из `CisList` и `ClientInfo` и конструкторы `Cis` без `mode` / `receiptType` оставляют их `null`. Такой запрос пишется прежними байтами.
 
 Чтение ответа:
 
