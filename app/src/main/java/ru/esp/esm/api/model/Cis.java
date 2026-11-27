@@ -9,27 +9,46 @@ import androidx.annotation.Nullable;
 import java.util.Objects;
 
 /**
- * Код идентификации
+ * Код идентификации.
+ * <p>
+ * {@code mode} и {@code receiptType} в parcel самого {@code Cis} не пишутся:
+ * их кладет хвост {@link CodesCheckRequest}, иначе старый список кодов разъедется.
  */
 public class Cis implements Parcelable {
     @NonNull
     private final String cis;
     @Nullable
     private final Integer pg;
+    @Nullable
+    private final String mode;
+    @Nullable
+    private final String receiptType;
 
-    public Cis(@NonNull String cis, @Nullable Integer pg) {
+    public Cis(
+            @NonNull String cis,
+            @Nullable Integer pg,
+            @Nullable String mode,
+            @Nullable String receiptType
+    ) {
         this.cis = cis;
         this.pg = pg;
+        this.mode = mode;
+        this.receiptType = receiptType;
+    }
+
+    public Cis(@NonNull String cis, @Nullable Integer pg) {
+        this(cis, pg, null, null);
     }
 
     public Cis(@NonNull String cis) {
-        this.cis = cis;
-        this.pg = null;
+        this(cis, null, null, null);
     }
 
     protected Cis(@NonNull Parcel in) {
         this.cis = Objects.requireNonNull(in.readString());
         this.pg = in.readByte() == 0 ? null : in.readInt();
+        this.mode = null;
+        this.receiptType = null;
     }
 
 
@@ -69,12 +88,24 @@ public class Cis implements Parcelable {
         return pg;
     }
 
+    @Nullable
+    public String getMode() {
+        return mode;
+    }
+
+    @Nullable
+    public String getReceiptType() {
+        return receiptType;
+    }
+
     @NonNull
     @Override
     public String toString() {
         return "Cis{" +
                 "cis='" + cis + '\'' +
                 ", pg=" + pg +
+                ", mode=" + mode +
+                ", receiptType=" + receiptType +
                 '}';
     }
 }

@@ -44,16 +44,18 @@ class CodesCheckViewModel @Inject constructor(
         super.onCleared()
     }
 
-    fun codesCheck(codes: List<Cis>, tz: Int? = null) {
+    fun codesCheck(codes: List<Cis>, tz: Int? = null, customerInn: String? = null) {
         viewModelScope.launch {
             Log.d(TAG, "codesCheck called")
             _checkResult.value = EsmResult.Loading
+            if (hasEanExclusion(codes, customerInn) && !aidlSupportsEanExclusion()) return@launch
             val cisList = CisList(codes, tz)
 
             val esmResult = esmServiceClient.codesCheck(
                 CodesCheckRequest(
                     cisList,
-                    clientInfo
+                    clientInfo,
+                    customerInn
                 )
             )
             Log.d(TAG, "codesCheck response $esmResult")
@@ -86,6 +88,39 @@ class CodesCheckViewModel @Inject constructor(
         }
     }
 
+    private fun hasEanExclusion(codes: List<Cis>, customerInn: String?): Boolean {
+        if (!customerInn.isNullOrEmpty()) return true
+        return codes.any { it.mode != null || it.receiptType != null }
+    }
+
+    private fun aidlSupportsEanExclusion(): Boolean {
+        return when (val version = esmServiceClient.getAidlVersion()) {
+            is Success -> {
+                if (version.data >= EAN_EXCLUSION_AIDL_VERSION) {
+                    true
+                } else {
+                    _checkResult.value = Error(
+                        -1,
+                        "Поля mode, receiptType и customerInn поддерживаются с AIDL $EAN_EXCLUSION_AIDL_VERSION, сервис вернул ${version.data}"
+                    )
+                    false
+                }
+            }
+
+            is Error -> {
+                _checkResult.value = Error(version.code, version.message)
+                false
+            }
+
+            EsmResult.ServiceUnavailable -> {
+                _checkResult.value = EsmResult.ServiceUnavailable
+                false
+            }
+
+            EsmResult.Loading -> false
+        }
+    }
+
     fun clearCheckResult() {
         viewModelScope.launch {
             _checkResult.value = null
@@ -100,5 +135,6 @@ class CodesCheckViewModel @Inject constructor(
 
     companion object {
         private const val TAG = "CodesCheckViewModel"
+        private const val EAN_EXCLUSION_AIDL_VERSION = 5
     }
 }

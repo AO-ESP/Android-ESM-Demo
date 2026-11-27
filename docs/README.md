@@ -49,8 +49,9 @@
 | 2 | `getAidlVersion`, `codesCheck`, `cisSell`, `cisReturn`, `cisSold` | Базовый контракт |
 | 3 | плюс `getInfo` | ЕСМ v1.4.2 |
 | 4 | плюс `eanCheck`; в `KktInfoExternal` поле `licenceTill`; в `CodesCheckResponse` список `eans`; в `codesCheck` можно передавать и КИ, и EAN/GTIN | ЕСМ v1.*, ещё не в релизе. Номер версии продукта нужно сверить с релизом ЕСМ |
+| 5 | в `codesCheck` необязательные `mode` и `receiptType` у элемента `Cis` и `customerInn` у запроса. Пустые поля в `Parcel` не пишутся | Перед заполненными полями проверяйте `getAidlVersion() >= 5` |
 
-Вызов метода более новой версии на старом сервисе завершается `RemoteException` / `UnsupportedOperationException` на стороне клиента. Перед вызовом `getInfo` и `eanCheck` проверяйте `getAidlVersion()`.
+Вызов метода более новой версии на старом сервисе завершается `RemoteException` / `UnsupportedOperationException` на стороне клиента. Перед вызовом `getInfo` и `eanCheck` проверяйте `getAidlVersion()`. То же для полей исключения EAN в `codesCheck`: на сервисе старше версии 5 их передавать нельзя.
 
 ## Версии `IPiotManager`
 

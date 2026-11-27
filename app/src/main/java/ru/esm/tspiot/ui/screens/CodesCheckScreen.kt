@@ -13,6 +13,7 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,7 +50,7 @@ fun CodesCheckScreenPreview() {
         navController = createPreviewNavController(),
         checkResult = EsmResult.Success("data"),
         onClearCheckResultAction = {   },
-        onCodeChecksAction = { _, _, _ -> }
+        onCodeChecksAction = { _, _, _, _, _, _ -> }
     )
 }
 
@@ -66,10 +67,11 @@ fun CodesCheckScreen(
         navController = navController,
         checkResult = checkResult,
         onClearCheckResultAction = {  viewModel.clearCheckResult() },
-        onCodeChecksAction = { results: Set<ScanResult>, pg: Int?, tz: Int? ->
+        onCodeChecksAction = { results, pg, tz, mode, receiptType, customerInn ->
             viewModel.codesCheck(
-                codes = results.map { Cis(it.text, pg) },
-                tz = tz
+                codes = results.map { Cis(it.text, pg, mode, receiptType) },
+                tz = tz,
+                customerInn = customerInn,
             )
         }
     )
@@ -81,7 +83,7 @@ fun CodesCheckScreenContent(
     navController: NavHostController = LocalNavController.current,
     checkResult: EsmResult<String>?,
     onClearCheckResultAction: () -> Unit,
-    onCodeChecksAction: (Set<ScanResult>, Int?, Int?) -> Unit
+    onCodeChecksAction: (Set<ScanResult>, Int?, Int?, String?, String?, String?) -> Unit
 ) {
     val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
     var scanResult by rememberSaveable { mutableStateOf<Set<ScanResult>?>(null) }
@@ -90,6 +92,9 @@ fun CodesCheckScreenContent(
 
     var tz by rememberSaveable { mutableStateOf<Int?>(2) }
     var pg by rememberSaveable { mutableStateOf<Int?>(16) }
+    var mode by rememberSaveable { mutableStateOf("") }
+    var receiptType by rememberSaveable { mutableStateOf("") }
+    var customerInn by rememberSaveable { mutableStateOf("") }
 
     val cameraPermissionState = rememberPermissionState(
         permission = Manifest.permission.CAMERA
@@ -176,13 +181,37 @@ fun CodesCheckScreenContent(
                     )
                 }
                 item {
+                    OptionalTextField(
+                        value = mode,
+                        onValueChange = { mode = it },
+                        label = "mode: horeca, vend, osu",
+                    )
+                }
+                item {
+                    OptionalTextField(
+                        value = receiptType,
+                        onValueChange = { receiptType = it },
+                        label = "receiptType: avance",
+                    )
+                }
+                item {
+                    OptionalTextField(
+                        value = customerInn,
+                        onValueChange = { customerInn = it },
+                        label = "customerInn",
+                    )
+                }
+                item {
                     MethodSection(
-                        title = "Метод codesCheck (AIDL version 2)",
+                        title = "Метод codesCheck",
                         onClick = {
                             onCodeChecksAction(
                                 results,
                                 pg,
-                                tz
+                                tz,
+                                mode.ifEmpty { null },
+                                receiptType.ifEmpty { null },
+                                customerInn.ifEmpty { null },
                             )
                         },
                         result = checkResult
@@ -191,4 +220,21 @@ fun CodesCheckScreenContent(
             }
         }
     }
+}
+
+@Composable
+private fun OptionalTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .fillMaxWidth(),
+        label = { Text(label) },
+        singleLine = true,
+    )
 }
